@@ -1,7 +1,7 @@
 package csc207.mcp.entity;
 
 /**
- * A registered account and its owned toolkit.
+ * A registered account and its owned mcpkit.
  * Password hashing, username uniqueness, authentication, and persistence belong
  * to collaborating use cases and adapters, not this entity.
  */
@@ -12,13 +12,13 @@ public final class User {
     private final String passwordHash;
     private final Mcpkit mcpkit;
 
-    /** Creates a new account with its own initially empty toolkit. */
+    /** Creates a new account with its own initially empty mcpkit. */
     public User(String userId, String username, String email, String passwordHash) {
-        this(userId, username, email, passwordHash, new Mcpkit(0));
+        this(userId, username, email, passwordHash, new Mcpkit(userId));
     }
 
     /**
-     * Creates or restores an account with an existing toolkit.
+     * Creates or restores an account with an existing mcpkit.
      * String values must be nonblank and are retained without normalization.
      * Email format and password-policy checks are performed by the signup use case.
      *

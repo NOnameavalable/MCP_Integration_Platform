@@ -7,7 +7,7 @@ public final class UserTest {
     private UserTest() { }
 
     public static void main(String[] args) {
-        Mcpkit mcpkit = new Mcpkit(0);
+        Mcpkit mcpkit = new Mcpkit("u1");
         User restored = new User("u1", "alice", "alice@example.test", "encoded-hash", mcpkit);
         check(restored.getUserId().equals("u1"), "identity retained");
         check(restored.getUsername().equals("alice"), "username retained");
