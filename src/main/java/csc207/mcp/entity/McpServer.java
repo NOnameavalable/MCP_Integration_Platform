@@ -2,6 +2,7 @@ package csc207.mcp.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Represents an MCP server and all the tools it provides.
@@ -10,14 +11,16 @@ public class McpServer {
     private String name;
     private String description;
     private List<Tool> tools;
+    private String mcpId;
 
     public McpServer(String name, String description) {
         this.name = name;
         this.description = description;
         this.tools = new ArrayList<>();
+        this.mcpId = UUID.randomUUID().toString();
     }
 
-    public String getName() {
+    public String getMcpName() {
         return name;
     }
 
@@ -27,6 +30,10 @@ public class McpServer {
 
     public List<Tool> getTools() {
         return tools;
+    }
+
+    public String getMcpId() {
+        return mcpId;
     }
 
     public void addTool(Tool tool) {

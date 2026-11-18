@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Mcpkit {
-    private int userId;
+    private String userId;
     private List<McpServer> mcpServers;
 
-    public Mcpkit(int userId) {
+    public Mcpkit(String userId) {
         this.userId = userId;
         this.mcpServers = new ArrayList<>();
     }
 
-    public boolean addToolkit(McpServer mcpServer) {
+    public boolean addTool(McpServer mcpServer) {
         if (!mcpServers.contains(mcpServer)) {
             mcpServers.add(mcpServer);
             return true;
@@ -21,7 +21,7 @@ public class Mcpkit {
         }
     }
 
-    public boolean removeToolkit(McpServer mcpServer) {
+    public boolean removeTool(McpServer mcpServer) {
         if (mcpServers.contains(mcpServer)) {
             mcpServers.remove(mcpServer);
             return true;
@@ -30,11 +30,11 @@ public class Mcpkit {
         }
     }
 
-    public List<McpServer> toolKitGetter() {
+    public List<McpServer> mcpkitGetter() {
         return mcpServers;
     }
 
-    public int userIdGetter() {
+    public String userIdGetter() {
         return userId;
     }
 
