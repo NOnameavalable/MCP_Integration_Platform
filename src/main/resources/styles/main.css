@@ -1,0 +1,47 @@
+.root-pane {
+    -fx-background-color: #F3F4F6;
+}
+
+.header-bar {
+    -fx-background-color: linear-gradient(to right, #BCC2CA, #E4E7EB);
+    -fx-padding: 12 20 12 30;
+    -fx-pref-height: 45;
+}
+
+.header-title {
+    -fx-text-fill: #333943;
+    -fx-font-size: 18px;
+    -fx-font-weight: normal;
+    -fx-font-family: "Audiowide";
+    -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.18), 5, 0, 0, 0);
+}
+
+.sidebar {
+    -fx-padding: 12 8;
+    -fx-spacing: 6;
+    -fx-border-color: transparent #D1D5DB transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.fixed-sidebar {
+    -fx-background-color: #E4E7EB;
+}
+
+.expandable-sidebar {
+    -fx-background-color: #EBEDF0;
+}
+
+.sidebar-button {
+    -fx-alignment: center;
+    -fx-background-color: transparent;
+    -fx-padding: 8 10;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: #D1D5DB;
+    -fx-cursor: hand;
+}
+
+.sidebar-button:focus-visible {
+    -fx-background-color: #D1D5DB;
+}
