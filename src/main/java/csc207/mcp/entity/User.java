@@ -10,11 +10,11 @@ public final class User {
     private final String username;
     private final String email;
     private final String passwordHash;
-    private final Toolkit toolkit;
+    private final Mcpkit mcpkit;
 
     /** Creates a new account with its own initially empty toolkit. */
     public User(String userId, String username, String email, String passwordHash) {
-        this(userId, username, email, passwordHash, new Toolkit());
+        this(userId, username, email, passwordHash, new Mcpkit(0));
     }
 
     /**
@@ -25,15 +25,15 @@ public final class User {
      * @throws IllegalArgumentException if a required value is missing or blank
      */
     public User(String userId, String username, String email,
-                String passwordHash, Toolkit toolkit) {
+            String passwordHash, Mcpkit mcpkit) {
         this.userId = requireNonBlank(userId, "userId");
         this.username = requireNonBlank(username, "username");
         this.email = requireNonBlank(email, "email");
         this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
-        if (toolkit == null) {
-            throw new IllegalArgumentException("toolkit must not be null");
+        if (mcpkit == null) {
+            throw new IllegalArgumentException("mcpkit must not be null");
         }
-        this.toolkit = toolkit;
+        this.mcpkit = mcpkit;
     }
 
     public String getUserId() {
@@ -48,14 +48,16 @@ public final class User {
         return email;
     }
 
-    /** For authentication/persistence only; never include in profile output or logs. */
+    /**
+     * For authentication/persistence only; never include in profile output or logs.
+     */
     public String getPasswordHash() {
         return passwordHash;
     }
 
-    /** Returns the owned toolkit; its internal operations belong to Toolkit. */
-    public Toolkit getToolkit() {
-        return toolkit;
+    /** Returns the owned mcpkit; its internal operations belong to Mcpkit. */
+    public Mcpkit getMcpkit() {
+        return mcpkit;
     }
 
     private static String requireNonBlank(String value, String fieldName) {

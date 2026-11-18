@@ -7,18 +7,18 @@ public final class UserTest {
     private UserTest() { }
 
     public static void main(String[] args) {
-        Toolkit toolkit = new Toolkit();
-        User restored = new User("u1", "alice", "alice@example.test", "encoded-hash", toolkit);
+        Mcpkit mcpkit = new Mcpkit(0);
+        User restored = new User("u1", "alice", "alice@example.test", "encoded-hash", mcpkit);
         check(restored.getUserId().equals("u1"), "identity retained");
         check(restored.getUsername().equals("alice"), "username retained");
         check(restored.getEmail().equals("alice@example.test"), "email retained");
         check(restored.getPasswordHash().equals("encoded-hash"), "hash retained");
-        check(restored.getToolkit() == toolkit, "restored toolkit retained");
+        check(restored.getMcpkit() == mcpkit, "restored mcpkit retained");
 
         User first = new User("u2", "bob", "bob@example.test", "hash-2");
         User second = new User("u3", "carol", "carol@example.test", "hash-3");
-        check(first.getToolkit() != null, "new account owns a toolkit");
-        check(first.getToolkit() != second.getToolkit(), "accounts do not share a default toolkit");
+        check(first.getMcpkit() != null, "new account owns a mcpkit");
+        check(first.getMcpkit() != second.getMcpkit(), "accounts do not share a default mcpkit");
 
         for (int field = 0; field < 4; field++) {
             for (String invalid : new String[] {null, "", " \t\n"}) {
