@@ -37,12 +37,16 @@ implement those interfaces, and `app/` wires the application together.
 
 ## Development
 
-Use JDK 11 or newer and Maven. Java compilation targets Java 11 to match the
-current course examples.
+Use JDK 26 and Maven for local development. The minimum JDK version is 23,
+which is also the Maven compilation target. The desktop UI uses JavaFX 25.
+Run `mvn -version` to check which JDK Maven is using.
 
 ```sh
 mvn compile
 ```
 
-This scaffold has no Java classes or runnable application yet. Empty directories
-contain `.gitkeep` placeholders so they can be included in Git.
+To launch the JavaFX window from the project directory, run:
+
+```sh
+mvn javafx:run
+```
