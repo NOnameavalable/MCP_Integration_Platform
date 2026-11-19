@@ -1,10 +1,49 @@
-.main-content {
-    -fx-background-color: #F4F5F7;
+.content-view {
+    -fx-background-color: #E8ECF1;
     -fx-background-radius: 16 0 0 16;
+    -fx-padding: 7;
 }
 
-.main-content:sidebar-visible {
+.content-view:sidebar-visible {
     -fx-background-radius: 0;
+}
+
+.content-panel {
+    -fx-background-color: #F4F5F7;
+    -fx-background-radius: 28;
+    -fx-padding: 28;
+}
+
+.content-body {
+    -fx-alignment: center;
+}
+
+.overlay-auth-button {
+    -fx-padding: 0 16;
+    -fx-background-insets: 0;
+    -fx-background-radius: 18;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.overlay-login-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #445063;
+}
+
+.overlay-login-button:hover,
+.overlay-login-button:focused {
+    -fx-background-color: #E5E9EE;
+}
+
+.overlay-signup-button {
+    -fx-background-color: #374151;
+    -fx-text-fill: white;
+}
+
+.overlay-signup-button:hover,
+.overlay-signup-button:focused {
+    -fx-background-color: #4B5563;
 }
 
 .home-search-bar {
@@ -15,9 +54,6 @@
 .home-search-input {
     -fx-background-color: transparent;
     -fx-padding: 0;
-    -fx-min-height: 49;
-    -fx-pref-height: 49;
-    -fx-max-height: 49;
     -fx-font-size: 14px;
     -fx-text-fill: #333943;
     -fx-prompt-text-fill: #636C7B;

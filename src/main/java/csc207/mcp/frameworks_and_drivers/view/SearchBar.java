@@ -25,7 +25,7 @@ public final class SearchBar extends HBox {
         input.setAccessibleText("Search MCP servers");
         input.setPrefRowCount(1);
         input.setWrapText(true);
-        input.setMinWidth(0);
+        input.setMinSize(0, 0);
         input.getStyleClass().add("home-search-input");
         setHgrow(input, Priority.ALWAYS);
 

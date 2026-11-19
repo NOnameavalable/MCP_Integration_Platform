@@ -46,3 +46,16 @@
 .sidebar-button:focus-visible {
     -fx-background-color: #D1D5DB;
 }
+
+.fixed-sidebar .sidebar-button {
+    -fx-padding: 8 6;
+}
+
+.navigation-button {
+    -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12;
+    -fx-text-fill: #333943;
+    -fx-font-size: 14px;
+    -fx-min-height: 42;
+    -fx-background-radius: 12;
+}
