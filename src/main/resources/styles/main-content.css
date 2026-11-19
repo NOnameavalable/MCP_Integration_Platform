@@ -1,0 +1,38 @@
+.main-content {
+    -fx-background-color: #F4F5F7;
+    -fx-background-radius: 16 0 0 16;
+}
+
+.main-content:sidebar-visible {
+    -fx-background-radius: 0;
+}
+
+.home-search-bar {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+}
+
+.home-search-input {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-min-height: 49;
+    -fx-pref-height: 49;
+    -fx-max-height: 49;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333943;
+    -fx-prompt-text-fill: #636C7B;
+}
+
+.home-search-input .scroll-pane,
+.home-search-input .viewport,
+.home-search-input .content {
+    -fx-background-color: transparent;
+}
+
+.home-search-input .scroll-pane {
+    -fx-vbar-policy: never;
+}
+
+.home-search-input .content {
+    -fx-padding: 9 16 11 16;
+}
