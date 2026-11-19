@@ -5,3 +5,8 @@ target/
 .env
 .env.*
 !.env.example
+
+# Keep personal documentation local; share user stories.
+/docs/*
+!/docs/user-stories.md
+!/docs/.gitkeep
