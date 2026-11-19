@@ -1,5 +1,6 @@
 package csc207.mcp.frameworks_and_drivers.security;
 
+import csc207.mcp.use_case.login.PasswordVerifier;
 import csc207.mcp.use_case.signup.PasswordHasher;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -11,7 +12,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 /** JDK-only password hashing adapter. The encoded format is shared with login. */
-public final class Pbkdf2PasswordHasher implements PasswordHasher {
+public final class Pbkdf2PasswordHasher implements PasswordHasher, PasswordVerifier {
     private static final int ITERATIONS = 600_000;
     private static final int SALT_BYTES = 16;
     private static final int HASH_BITS = 256;
@@ -29,6 +30,7 @@ public final class Pbkdf2PasswordHasher implements PasswordHasher {
     }
 
     /** For the login teammate: compare a supplied password to the stored encoding. */
+    @Override
     public boolean matches(String password, String encodedHash) {
         if (password == null || encodedHash == null || encodedHash.length() > 256) {
             return false;
