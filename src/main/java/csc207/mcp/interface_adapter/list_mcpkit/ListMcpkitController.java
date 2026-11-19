@@ -8,14 +8,12 @@ import csc207.mcp.use_case.list_mcpkit.ListMcpkitInputBoundary;
  */
 public class ListMcpkitController {
     private final ListMcpkitInputBoundary interactor;
-    private final User user;
 
-    public ListMcpkitController(ListMcpkitInputBoundary interactor, User user) {
+    public ListMcpkitController(ListMcpkitInputBoundary interactor) {
         this.interactor = interactor;
-        this.user = user;
     }
 
-    public void execute() {
+    public void execute(User user) {
         String userId = user.getUserId();
         interactor.listMcpkit(userId);
     }
