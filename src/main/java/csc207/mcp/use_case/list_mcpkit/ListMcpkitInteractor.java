@@ -18,6 +18,10 @@ public class ListMcpkitInteractor implements ListMcpkitInputBoundary {
     @Override
     public void listMcpkit(String userId) {
         McpServer[] mcpkit = dataAccess.getMcpkitByUserId(userId);
-
+        if (mcpkit == null || mcpkit.length == 0) {
+            presenter.prepareview(mcpkit, false, "Mcpkit is empty");
+        } else {
+            presenter.prepareview(mcpkit, true, "List mcpkit successful");
+        }
     }
 }
