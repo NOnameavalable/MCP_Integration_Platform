@@ -1,52 +1,59 @@
 package csc207.mcp.interface_adapter.signup;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 
-/** Framework-independent presentation data. Never stores passwords or their hashes. */
+/** JavaFX-observable presentation state; never stores passwords or their hashes. */
 public final class SignupViewModel {
-    public static final String RESULT_PROPERTY = "signupResult";
-    private final PropertyChangeSupport changes = new PropertyChangeSupport(this);
-    private boolean successful;
-    private String userId = "";
-    private String username = "";
-    private String email = "";
-    private String errorMessage = "";
+    private final ReadOnlyObjectWrapper<Result> state = new ReadOnlyObjectWrapper<>(
+            this, "state", new Result(false, "", "", "", ""));
 
-    public boolean isSuccessful() { return successful; }
-    public String getUserId() { return userId; }
-    public String getUsername() { return username; }
-    public String getEmail() { return email; }
-    public String getErrorMessage() { return errorMessage; }
+    /** The view can observe/bind this property but cannot replace the state. */
+    public ReadOnlyObjectProperty<Result> stateProperty() {
+        return state.getReadOnlyProperty();
+    }
 
+    public Result getState() { return state.get(); }
+    public boolean isSuccessful() { return getState().isSuccessful(); }
+    public String getUserId() { return getState().getUserId(); }
+    public String getUsername() { return getState().getUsername(); }
+    public String getEmail() { return getState().getEmail(); }
+    public String getErrorMessage() { return getState().getErrorMessage(); }
+
+    // Presenter calls these on the JavaFX application thread in the running UI.
     void showSuccess(String userId, String username, String email) {
-        this.successful = true;
-        this.userId = userId;
-        this.username = username;
-        this.email = email;
-        this.errorMessage = "";
-        notifyResult();
+        state.set(new Result(true, userId, username, email, ""));
     }
 
     void showFailure(String errorMessage) {
-        this.successful = false;
-        this.userId = "";
-        this.username = "";
-        this.email = "";
-        this.errorMessage = errorMessage;
-        notifyResult();
+        state.set(new Result(false, "", "", "", errorMessage));
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        changes.addPropertyChangeListener(listener);
-    }
+    /**
+     * One immutable snapshot makes each result observable as a single update.
+     * Each attempt gets a new object, so repeated identical errors still notify.
+     * Kept inside the ViewModel; there is no separate SignupState file.
+     */
+    public static final class Result {
+        private final boolean successful;
+        private final String userId;
+        private final String username;
+        private final String email;
+        private final String errorMessage;
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        changes.removePropertyChangeListener(listener);
-    }
+        private Result(boolean successful, String userId, String username,
+                       String email, String errorMessage) {
+            this.successful = successful;
+            this.userId = userId;
+            this.username = username;
+            this.email = email;
+            this.errorMessage = errorMessage;
+        }
 
-    private void notifyResult() {
-        // Null old value ensures repeated identical errors still notify the view.
-        changes.firePropertyChange(RESULT_PROPERTY, null, this);
+        public boolean isSuccessful() { return successful; }
+        public String getUserId() { return userId; }
+        public String getUsername() { return username; }
+        public String getEmail() { return email; }
+        public String getErrorMessage() { return errorMessage; }
     }
 }

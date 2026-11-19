@@ -22,6 +22,7 @@ public final class SignupTest {
         hashingAndIdentityFailures();
         presentationIntegration();
         realHashingAndAssembly();
+        dispatchedPresentation();
         System.out.println("Signup checks passed: " + checks);
     }
 
@@ -109,12 +110,15 @@ public final class SignupTest {
         SignupViewModel model = new SignupViewModel();
         AtomicInteger events = new AtomicInteger();
         AtomicInteger navigation = new AtomicInteger();
-        java.beans.PropertyChangeListener listener = e -> {
-            check(e.getPropertyName().equals(SignupViewModel.RESULT_PROPERTY), "result event name");
+        javafx.beans.binding.StringBinding errorText = javafx.beans.binding.Bindings.createStringBinding(
+                model::getErrorMessage, model.stateProperty());
+        check(errorText.get().isEmpty(), "JavaFX binding starts empty");
+        javafx.beans.value.ChangeListener<SignupViewModel.Result> listener = (observable, oldState, newState) -> {
+            check(newState == model.getState(), "JavaFX listener sees complete current state");
             events.incrementAndGet();
         };
-        model.addPropertyChangeListener(listener);
-        SignupPresenter presenter = new SignupPresenter(model, navigation::incrementAndGet);
+        model.stateProperty().addListener(listener);
+        SignupPresenter presenter = new SignupPresenter(model, navigation::incrementAndGet, Runnable::run);
         SignupController controller = new SignupController(
                 new SignupInteractor(dao, presenter, p -> "encoded-hash", () -> "u1"));
         controller.execute("alice", "alice@example.test", "secret", "secret");
@@ -122,12 +126,14 @@ public final class SignupTest {
         check(model.getErrorMessage().isEmpty() && navigation.get() == 1, "success navigation once");
         controller.execute("alice", "alice@example.test", "secret", "secret");
         check(!model.isSuccessful() && !model.getErrorMessage().isEmpty(), "failure replaces success");
+        check(errorText.get().equals(model.getErrorMessage()), "JavaFX binding reflects failure");
         check(model.getUserId().isEmpty() && model.getEmail().isEmpty(), "stale success cleared");
         controller.execute("alice", "alice@example.test", "secret", "secret");
         check(events.get() == 3 && navigation.get() == 1, "repeated failure notifies without navigation");
-        model.removePropertyChangeListener(listener);
+        model.stateProperty().removeListener(listener);
         presenter.prepareFailView("test");
         check(events.get() == 3, "listener can be removed");
+        errorText.dispose();
 
         Result throwingPresenter = new Result() {
             @Override public void prepareSuccessView(SignupOutputData output) {
@@ -158,11 +164,37 @@ public final class SignupTest {
         MemoryDao dao = new MemoryDao();
         SignupViewModel model = new SignupViewModel();
         AtomicInteger navigation = new AtomicInteger();
-        SignupController controller = SignupFactory.create(dao, model, navigation::incrementAndGet);
+        SignupController controller = SignupFactory.create(dao, model, navigation::incrementAndGet, Runnable::run);
         controller.execute("bob", "bob@example.test", "password", "password");
         check(model.isSuccessful() && navigation.get() == 1, "production assembly runs registration");
         check(hasher.matches("password", dao.users.get("bob").getPasswordHash()), "saved hash usable by login");
         check(!dao.users.get("bob").getPasswordHash().equals("password"), "plaintext not saved");
+    }
+
+    private static void dispatchedPresentation() {
+        SignupViewModel model = new SignupViewModel();
+        java.util.List<Runnable> queue = new java.util.ArrayList<>();
+        AtomicInteger navigation = new AtomicInteger();
+        AtomicInteger events = new AtomicInteger();
+        model.stateProperty().addListener((observable, oldState, newState) -> events.incrementAndGet());
+        SignupPresenter presenter = new SignupPresenter(model, () -> {
+            check(model.isSuccessful(), "success state is set before navigation");
+            navigation.incrementAndGet();
+        }, queue::add);
+        SignupViewModel.Result initial = model.getState();
+        presenter.prepareSuccessView(new SignupOutputData("u1", "alice", "alice@example.test"));
+        check(queue.size() == 1 && model.getState() == initial, "worker result is queued, not applied immediately");
+        check(navigation.get() == 0 && events.get() == 0, "navigation and listeners wait for UI dispatch");
+        queue.remove(0).run();
+        SignupViewModel.Result success = model.getState();
+        check(navigation.get() == 1 && events.get() == 1, "one dispatched success notification");
+        presenter.prepareFailView("Unable to register");
+        check(model.getState() == success, "failure also waits for UI dispatch");
+        queue.remove(0).run();
+        check(!model.isSuccessful() && model.getUserId().isEmpty(), "failure atomically clears old success data");
+        check(success.isSuccessful() && success.getUsername().equals("alice"), "previous snapshot is immutable");
+        check(navigation.get() == 1 && events.get() == 2, "failure does not navigate");
+        check(!(model.stateProperty() instanceof javafx.beans.property.Property), "view receives a truly read-only property");
     }
 
     private static class Result implements SignupOutputBoundary {
