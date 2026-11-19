@@ -59,11 +59,11 @@ public class McpServer {
         if (!(obj instanceof McpServer))
             return false;
         McpServer other = (McpServer) obj;
-        return this.name.equals(other.name);
+        return this.mcpId.equals(other.mcpId);
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return mcpId.hashCode();
     }
 }
