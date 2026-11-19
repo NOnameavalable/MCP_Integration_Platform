@@ -12,15 +12,10 @@ public class ListMcpkitPresenter implements ListMcpkitOutputBoundary {
         this.mcpkitViewModel = mcpkitViewModel;
     }
 
-    public void prepareview(ListMcpkitOutputData ListMcpkitOutputData) {
-        if (ListMcpkitOutputData.isSuccess()) {
-            mcpkitViewModel.setState(new McpkitState(ListMcpkitOutputData.getErrorMessage(),
-                    ListMcpkitOutputData.isSuccess(), ListMcpkitOutputData.getMcpkitList()));
-        } else {
-            mcpkitViewModel.setState(new McpkitState(ListMcpkitOutputData.getErrorMessage(),
-                    ListMcpkitOutputData.isSuccess(), ListMcpkitOutputData.getMcpkitList()));
-        }
-
+    @Override
+    public void prepareView(ListMcpkitOutputData outputdata) {
+        mcpkitViewModel.setState(new McpkitState(outputdata.getMessage(),
+                outputdata.isSuccess(), outputdata.getMcpkitList()));
     }
 
 }

@@ -6,12 +6,12 @@ import java.util.List;
 public class ListMcpkitOutputData {
     private List<McpServer> mcpkit;
     private boolean status;
-    private String error;
+    private String message;
 
-    public ListMcpkitOutputData(List<McpServer> mcpkit, boolean status, String error) {
+    public ListMcpkitOutputData(List<McpServer> mcpkit, boolean status, String message) {
         this.mcpkit = mcpkit;
         this.status = status;
-        this.error = error;
+        this.message = message;
     }
 
     public List<McpServer> getMcpkitList() {
@@ -22,7 +22,7 @@ public class ListMcpkitOutputData {
         return status;
     }
 
-    public String getErrorMessage() {
-        return error;
+    public String getMessage() {
+        return message;
     }
 }
