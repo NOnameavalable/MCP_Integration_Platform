@@ -2,6 +2,7 @@ package csc207.mcp.use_case.remove_from_mcpkit;
 
 import csc207.mcp.entity.McpServer;
 import csc207.mcp.entity.User;
+import java.util.List;
 
 public class RemoveFromMcpkitInteractor implements RemoveFromMcpkitInputBoundary {
     private final RemoveFromMcpkitDataAccessInterface dataAccess;
@@ -17,22 +18,24 @@ public class RemoveFromMcpkitInteractor implements RemoveFromMcpkitInputBoundary
     public void removeFromMcpkit(RemoveFromMcpkitInputData inputData) {
         User user = dataAccess.getUserById(inputData.getUserId());
         McpServer mcp = dataAccess.getMcpById(inputData.getMcpId());
+        List<McpServer> mcpkitList = dataAccess.getMcpkit(inputData.getUserId());
+
         if (user == null || mcp == null) {
-            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(false, null, null,
+            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(false, null, null, mcpkitList,
                     "user not found or mcp not found");
             presenter.prepareView(outputData);
             return;
         }
         if (!user.getMcpkit().contains(mcp)) {
             RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(false, mcp.getMcpId(),
-                    mcp.getMcpName(), "mcp not in user mcpkit");
+                    mcp.getMcpName(), mcpkitList, "mcp not in user mcpkit");
             presenter.prepareView(outputData);
             return;
         } else {
             user.getMcpkit().removeTool(mcp);
             dataAccess.removeFromUserMcpkit(user.getUserId(), inputData.getMcpId());
             RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(true, mcp.getMcpId(),
-                    mcp.getMcpName(), "mcp has been removed");
+                    mcp.getMcpName(), mcpkitList, "mcp has been removed");
             presenter.prepareView(outputData);
         }
     }

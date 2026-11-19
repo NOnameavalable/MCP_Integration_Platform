@@ -14,15 +14,15 @@ public class ListMcpkitOutputData {
         this.error = error;
     }
 
-    public List<McpServer> getMcpkit() {
+    public List<McpServer> getMcpkitList() {
         return mcpkit;
     }
 
-    public boolean getStatus() {
+    public boolean isSuccess() {
         return status;
     }
 
-    public String getError() {
+    public String getErrorMessage() {
         return error;
     }
 }
