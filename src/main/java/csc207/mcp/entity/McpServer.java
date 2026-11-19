@@ -2,6 +2,7 @@ package csc207.mcp.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -14,10 +15,14 @@ public class McpServer {
     private String mcpId;
 
     public McpServer(String name, String description) {
+        this(name, description, UUID.randomUUID().toString());
+    }
+
+    public McpServer(String name, String description, String mcpId) {
         this.name = name;
         this.description = description;
         this.tools = new ArrayList<>();
-        this.mcpId = UUID.randomUUID().toString();
+        this.mcpId = mcpId;
     }
 
     public String getMcpName() {
@@ -59,11 +64,11 @@ public class McpServer {
         if (!(obj instanceof McpServer))
             return false;
         McpServer other = (McpServer) obj;
-        return this.name.equals(other.name);
+        return Objects.equals(this.mcpId, other.mcpId);
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return Objects.hashCode(mcpId);
     }
 }

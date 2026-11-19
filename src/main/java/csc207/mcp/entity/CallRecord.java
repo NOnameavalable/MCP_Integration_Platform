@@ -6,14 +6,14 @@ import java.time.LocalDateTime;
  * Gateway-module scaffold. TODO: implement CallRecord.
  */
 public class CallRecord {
-    private int userId;
+    private String userId;
     private String mcpServerName;
     private String toolName;
     private String arguments;
     private String result;
     private LocalDateTime localDateTime;
 
-    public CallRecord(int userId, String mcpServerName, String toolName, String arguments) {
+    public CallRecord(String userId, String mcpServerName, String toolName, String arguments) {
         this.userId = userId;
         this.mcpServerName = mcpServerName;
         this.toolName = toolName;
@@ -21,7 +21,7 @@ public class CallRecord {
         this.localDateTime = LocalDateTime.now();
     }
 
-    public int getUserId() {
+    public String getUserId() {
         return this.userId;
     }
 
