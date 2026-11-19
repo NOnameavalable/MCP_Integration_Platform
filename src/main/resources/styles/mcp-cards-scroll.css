@@ -1,0 +1,47 @@
+.mcp-cards-scroll-pane,
+.mcp-cards-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.mcp-cards-scroll-pane {
+    -fx-padding: 0;
+}
+
+.mcp-cards-scroll-bar {
+    -fx-pref-width: 12;
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.mcp-cards-scroll-bar > .track-background,
+.mcp-cards-scroll-bar > .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.mcp-cards-scroll-bar:hover > .track {
+    -fx-background-color: #E1E6ED;
+    -fx-background-insets: 0 1 0 1;
+    -fx-background-radius: 6;
+}
+
+.mcp-cards-scroll-bar > .thumb {
+    -fx-background-color: #A2ABB7;
+    -fx-background-insets: 0 3 0 3;
+    -fx-background-radius: 6;
+}
+
+.mcp-cards-scroll-bar:hover > .thumb,
+.mcp-cards-scroll-bar > .thumb:pressed {
+    -fx-background-color: #758091;
+    -fx-background-insets: 0 2 0 2;
+}
+
+.mcp-cards-scroll-bar > .increment-button,
+.mcp-cards-scroll-bar > .decrement-button {
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-padding: 0;
+    -fx-opacity: 0;
+}

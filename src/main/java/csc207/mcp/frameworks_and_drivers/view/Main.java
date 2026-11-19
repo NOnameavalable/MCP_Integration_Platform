@@ -22,17 +22,16 @@ public class Main extends Application {
             }
         }
 
+        BorderPane root = new BorderPane();
         Header header = new PlatformHeader();
-        ToggleableSidebar expandable = new ExpandableSidebar();
+        ToggleableSidebar expandable = new ExpandableSidebar(root.widthProperty());
         Sidebar fixed = new FixedSidebar(expandable::toggle);
 
-        BorderPane root = new BorderPane();
         root.getStyleClass().add("root-pane");
         root.setTop(header);
         root.setLeft(new HBox(fixed, expandable));
 
         ContentView content = new HomeContent();
-        content.getStyleClass().add("main-content");
 
         PseudoClass sidebarVisible = PseudoClass.getPseudoClass("sidebar-visible");
         content.pseudoClassStateChanged(sidebarVisible, expandable.isVisible());
@@ -42,7 +41,7 @@ public class Main extends Application {
         root.setCenter(content);
 
         Scene scene = new Scene(root, 1000, 700);
-        scene.getStylesheets().addAll(stylesheet("background.css"), stylesheet("main-content.css"));
+        scene.getStylesheets().add(stylesheet("background.css"));
 
         stage.setScene(scene);
         header.configureWindow(stage);
