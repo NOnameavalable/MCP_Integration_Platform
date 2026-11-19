@@ -1,9 +1,9 @@
 .root-pane {
-    -fx-background-color: #F3F4F6;
+    -fx-background-color: linear-gradient(to bottom, #C4CAD2, #E4E7EB);
 }
 
 .header-bar {
-    -fx-background-color: linear-gradient(to right, #BCC2CA, #E4E7EB);
+    -fx-background-color: linear-gradient(to right, #C4CAD2, #E4E7EB);
     -fx-padding: 12 20 12 30;
     -fx-pref-height: 45;
 }
@@ -24,11 +24,12 @@
 }
 
 .fixed-sidebar {
-    -fx-background-color: #E4E7EB;
+    -fx-border-width: 0;
 }
 
 .expandable-sidebar {
     -fx-background-color: #EBEDF0;
+    -fx-background-radius: 16 0 0 16;
 }
 
 .sidebar-button {

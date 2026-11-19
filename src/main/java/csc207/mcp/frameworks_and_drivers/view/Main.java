@@ -1,10 +1,10 @@
 package csc207.mcp.frameworks_and_drivers.view;
 
 import javafx.application.Application;
+import javafx.css.PseudoClass;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
@@ -30,14 +30,27 @@ public class Main extends Application {
         root.getStyleClass().add("root-pane");
         root.setTop(header);
         root.setLeft(new HBox(fixed, expandable));
-        root.setCenter(new StackPane());
+
+        ContentView content = new HomeContent();
+        content.getStyleClass().add("main-content");
+
+        PseudoClass sidebarVisible = PseudoClass.getPseudoClass("sidebar-visible");
+        content.pseudoClassStateChanged(sidebarVisible, expandable.isVisible());
+        expandable.visibleProperty().addListener((observable, wasVisible, isVisible) ->
+                content.pseudoClassStateChanged(sidebarVisible, isVisible));
+
+        root.setCenter(content);
 
         Scene scene = new Scene(root, 1000, 700);
-        scene.getStylesheets().add(Objects.requireNonNull(
-                Main.class.getResource("/styles/main.css"), "Missing /styles/main.css").toExternalForm());
+        scene.getStylesheets().addAll(stylesheet("background.css"), stylesheet("main-content.css"));
 
         stage.setScene(scene);
         header.configureWindow(stage);
         stage.show();
+    }
+
+    private static String stylesheet(String name) {
+        String path = "/styles/" + name;
+        return Objects.requireNonNull(Main.class.getResource(path), "Missing " + path).toExternalForm();
     }
 }
