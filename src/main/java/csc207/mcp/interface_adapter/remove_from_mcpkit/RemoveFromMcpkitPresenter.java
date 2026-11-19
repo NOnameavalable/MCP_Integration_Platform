@@ -17,6 +17,6 @@ public class RemoveFromMcpkitPresenter implements RemoveFromMcpkitOutputBoundary
         String statusText = outputData.isSuccess() ? "success" : "failed";
         String message = statusText + ", mcp:" + outputData.getMcpName() + ", mcpid:"
                 + outputData.getMcpId() + "," + outputData.getMessage();
-        mcpkitViewModel.setState(new McpkitState(message, outputData.isSuccess()));
+        mcpkitViewModel.setState(new McpkitState(message, outputData.isSuccess(), outputData.getMcpkitList()));
     }
 }
