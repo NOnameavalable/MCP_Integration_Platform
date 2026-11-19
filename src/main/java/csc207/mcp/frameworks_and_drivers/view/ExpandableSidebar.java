@@ -1,11 +1,16 @@
 package csc207.mcp.frameworks_and_drivers.view;
 
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+
+import java.util.Objects;
 
 public class ExpandableSidebar extends ToggleableSidebar {
 
@@ -21,6 +26,11 @@ public class ExpandableSidebar extends ToggleableSidebar {
         setPrefWidth(EXPANDED_WIDTH);
         setMaxWidth(USE_PREF_SIZE);
 
+        getChildren().addAll(
+                navigationButton("Account", "user-round"),
+                navigationButton("Toolkit", "wrench"),
+                navigationButton("MCP Gateway", "network"));
+
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(widthProperty());
         clip.heightProperty().bind(heightProperty());
@@ -30,6 +40,19 @@ public class ExpandableSidebar extends ToggleableSidebar {
             setManaged(expanded);
             setVisible(expanded);
         });
+    }
+
+    private static Button navigationButton(String label, String iconName) {
+        var iconUrl = Objects.requireNonNull(
+                ExpandableSidebar.class.getResource("/icons/lucide/" + iconName + ".png"));
+        ImageView icon = new ImageView(new Image(iconUrl.toExternalForm()));
+        icon.setFitWidth(20);
+        icon.setFitHeight(20);
+        icon.setPreserveRatio(true);
+        Button button = new Button(label, icon);
+        button.getStyleClass().addAll("sidebar-button", "navigation-button");
+        button.setMaxWidth(Double.MAX_VALUE);
+        return button;
     }
 
     @Override

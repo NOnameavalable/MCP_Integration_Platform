@@ -13,13 +13,24 @@ public class FixedSidebar extends Sidebar {
 
     public FixedSidebar(Runnable onToggle) {
         getStyleClass().add("fixed-sidebar");
+        var homeIconUrl = Objects.requireNonNull(FixedSidebar.class.getResource("/icons/lucide/house.png"));
+        ImageView homeIcon = new ImageView(new Image(homeIconUrl.toExternalForm()));
+        homeIcon.setFitWidth(20);
+        homeIcon.setFitHeight(20);
+        homeIcon.setPreserveRatio(true);
+        Button homeButton = new Button();
+        homeButton.setGraphic(homeIcon);
+        homeButton.getStyleClass().add("sidebar-button");
+        homeButton.setAccessibleText("Home");
+        homeButton.setTooltip(new Tooltip("Home"));
         setMinWidth(WIDTH);
         setPrefWidth(WIDTH);
         setMaxWidth(WIDTH);
 
         var iconUrl = Objects.requireNonNull(FixedSidebar.class.getResource("/icons/lucide/panel-left.png"));
         ImageView icon = new ImageView(new Image(iconUrl.toExternalForm()));
-        icon.setFitWidth(15);
+        icon.setFitWidth(20);
+        icon.setFitHeight(20);
         icon.setPreserveRatio(true);
 
         Button toggleButton = new Button();
@@ -29,6 +40,6 @@ public class FixedSidebar extends Sidebar {
         toggleButton.setTooltip(new Tooltip("Toggle sidebar"));
         toggleButton.setMaxWidth(Double.MAX_VALUE);
         toggleButton.setOnAction(event -> onToggle.run());
-        getChildren().add(toggleButton);
+        getChildren().addAll(homeButton, toggleButton);
     }
 }
