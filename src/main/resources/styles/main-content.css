@@ -29,6 +29,10 @@
     -fx-background-color: transparent;
 }
 
+.home-search-input .scroll-pane {
+    -fx-vbar-policy: never;
+}
+
 .home-search-input .content {
     -fx-padding: 9 16 11 16;
 }
