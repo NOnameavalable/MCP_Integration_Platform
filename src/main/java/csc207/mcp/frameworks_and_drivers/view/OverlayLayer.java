@@ -33,7 +33,7 @@ public final class OverlayLayer extends Pane {
     private final DoubleBinding expandedHeight;
 
     public OverlayLayer(ReadOnlyDoubleProperty contentWidth, ReadOnlyDoubleProperty contentHeight,
-                        ObservableDoubleValue availableHeight) {
+                        ObservableDoubleValue availableHeight, Runnable onLogin, Runnable onSignup) {
         searchBar.maxWidthProperty().bind(contentWidth.multiply(SEARCH_WIDTH_FRACTION));
         DoubleBinding searchHeight = Bindings.createDoubleBinding(
                 () -> Math.clamp(contentHeight.get() * SEARCH_HEIGHT_FRACTION, MIN_SEARCH_HEIGHT, MAX_SEARCH_HEIGHT),
@@ -58,9 +58,11 @@ public final class OverlayLayer extends Pane {
         Button loginButton = new Button("Log in");
         loginButton.getStyleClass().addAll("overlay-auth-button", "overlay-login-button");
         loginButton.prefHeightProperty().bind(authButtonHeight);
+        loginButton.setOnAction(event -> onLogin.run());
         Button signupButton = new Button("Sign up");
         signupButton.getStyleClass().addAll("overlay-auth-button", "overlay-signup-button");
         signupButton.prefHeightProperty().bind(authButtonHeight);
+        signupButton.setOnAction(event -> onSignup.run());
         authControls.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
         authControls.setPickOnBounds(false);
         authControls.getChildren().addAll(loginButton, signupButton);
@@ -80,13 +82,40 @@ public final class OverlayLayer extends Pane {
         }, expandedHeight, scrollOffset));
     }
 
-    @Override
-    protected void layoutChildren() {
-        layoutInArea(authControls, 0, CONTENT_TOP, getWidth(), getHeight(), -1, HPos.RIGHT, VPos.TOP);
-        layoutSearchBar();
+    void applyAuthState(boolean loggedIn) {
+        if (loggedIn) {
+            showSignedInLayout();
+        } else {
+            showSignedOutLayout();
+        }
+        requestLayout();
     }
 
-    private void layoutSearchBar() {
+    private void showSignedInLayout() {
+        authControls.setVisible(false);
+        authControls.setManaged(false);
+    }
+
+    private void showSignedOutLayout() {
+        authControls.setVisible(true);
+        authControls.setManaged(true);
+    }
+
+    @Override
+    protected void layoutChildren() {
+        if (authControls.isManaged()) {
+            layoutInArea(authControls, 0, CONTENT_TOP, getWidth(), getHeight(), -1, HPos.RIGHT, VPos.TOP);
+            layoutSignedOutSearchBar();
+        } else {
+            layoutExpandedSearchBar();
+        }
+    }
+
+    private void layoutExpandedSearchBar() {
+        layoutInArea(searchBar, 0, 0, getWidth(), getHeight(), -1, HPos.CENTER, VPos.BOTTOM);
+    }
+
+    private void layoutSignedOutSearchBar() {
         double searchHeight = searchBar.getPrefHeight();
         double buttonTop = authControls.getLayoutY();
         double buttonHeight = authControls.getHeight();
@@ -96,7 +125,7 @@ public final class OverlayLayer extends Pane {
         double endHeight = Math.min(expandedHeight.get(), COLLAPSED_HEIGHT);
         double resizeDistance = startHeight - endHeight;
         if (resizeDistance <= 0 || getHeight() >= startHeight) {
-            layoutInArea(searchBar, 0, 0, getWidth(), getHeight(), -1, HPos.CENTER, VPos.BOTTOM);
+            layoutExpandedSearchBar();
             return;
         }
 

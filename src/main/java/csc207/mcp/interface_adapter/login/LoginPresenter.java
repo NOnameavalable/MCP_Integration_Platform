@@ -9,16 +9,16 @@ import javafx.application.Platform;
 /** Updates JavaFX-observable login state and navigation on the UI thread. */
 public final class LoginPresenter implements LoginOutputBoundary {
     private final LoginViewModel viewModel;
-    private final Runnable onLoginSuccess;
+    private final Consumer<LoginOutputData> onLoginSuccess;
     private final Consumer<Runnable> uiDispatcher;
 
     /** Requires a running JavaFX application when results are presented. */
-    public LoginPresenter(LoginViewModel viewModel, Runnable onLoginSuccess) {
+    public LoginPresenter(LoginViewModel viewModel, Consumer<LoginOutputData> onLoginSuccess) {
         this(viewModel, onLoginSuccess, LoginPresenter::dispatchToJavaFx);
     }
 
     /** Allows tests to dispatch results without starting the JavaFX toolkit. */
-    public LoginPresenter(LoginViewModel viewModel, Runnable onLoginSuccess,
+    public LoginPresenter(LoginViewModel viewModel, Consumer<LoginOutputData> onLoginSuccess,
                           Consumer<Runnable> uiDispatcher) {
         this.viewModel = Objects.requireNonNull(viewModel);
         this.onLoginSuccess = Objects.requireNonNull(onLoginSuccess);
@@ -30,7 +30,7 @@ public final class LoginPresenter implements LoginOutputBoundary {
         Objects.requireNonNull(data);
         uiDispatcher.accept(() -> {
             viewModel.showSuccess(data.getUserId(), data.getUsername());
-            onLoginSuccess.run();
+            onLoginSuccess.accept(data);
         });
     }
 

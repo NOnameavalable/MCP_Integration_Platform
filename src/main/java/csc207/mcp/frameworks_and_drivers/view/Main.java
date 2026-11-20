@@ -1,5 +1,6 @@
 package csc207.mcp.frameworks_and_drivers.view;
 
+import csc207.mcp.interface_adapter.Session;
 import javafx.application.Application;
 import javafx.css.PseudoClass;
 import javafx.scene.Scene;
@@ -10,9 +11,11 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Objects;
 
 public class Main extends Application {
+    private final Session session = new Session();
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -24,21 +27,35 @@ public class Main extends Application {
 
         BorderPane root = new BorderPane();
         Header header = new PlatformHeader();
-        ToggleableSidebar expandable = new ExpandableSidebar(root.widthProperty());
-        Sidebar fixed = new FixedSidebar(expandable::toggle);
+        ContentView login = new LoginContent();
+        ContentView signup = new SignupContent();
+        ContentView account = new AccountContent();
+        ContentView toolkit = new ToolkitContent();
+        ContentView gateway = new McpGatewayContent();
+        HomeContent home = new HomeContent(() -> root.setCenter(login), () -> root.setCenter(signup));
+        ToggleableSidebar expandable = new ExpandableSidebar(root.widthProperty(),
+                () -> root.setCenter(account), () -> root.setCenter(toolkit), () -> root.setCenter(gateway));
+        Sidebar fixed = new FixedSidebar(expandable::toggle, () -> root.setCenter(home));
 
         root.getStyleClass().add("root-pane");
         root.setTop(header);
         root.setLeft(new HBox(fixed, expandable));
 
-        ContentView content = new HomeContent();
+        session.addAuthStateListener(home);
+        home.onAuthStateChanged(session.isLoggedIn());
 
         PseudoClass sidebarVisible = PseudoClass.getPseudoClass("sidebar-visible");
-        content.pseudoClassStateChanged(sidebarVisible, expandable.isVisible());
-        expandable.visibleProperty().addListener((observable, wasVisible, isVisible) ->
-                content.pseudoClassStateChanged(sidebarVisible, isVisible));
+        List<ContentView> pages = List.of(home, login, signup, account, toolkit, gateway);
+        for (ContentView page : pages) {
+            page.pseudoClassStateChanged(sidebarVisible, expandable.isVisible());
+        }
+        expandable.visibleProperty().addListener((observable, wasVisible, isVisible) -> {
+            for (ContentView page : pages) {
+                page.pseudoClassStateChanged(sidebarVisible, isVisible);
+            }
+        });
 
-        root.setCenter(content);
+        root.setCenter(home);
 
         Scene scene = new Scene(root, 1000, 700);
         scene.getStylesheets().add(stylesheet("background.css"));
