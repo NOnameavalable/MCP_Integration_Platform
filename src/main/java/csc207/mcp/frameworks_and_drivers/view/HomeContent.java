@@ -6,11 +6,11 @@ import javafx.scene.layout.StackPane;
 /** The platform's home view. */
 public final class HomeContent extends ContentView {
 
-    public HomeContent() {
+    public HomeContent(Runnable onLogin, Runnable onSignup) {
         StackPane layers = new StackPane();
         layers.setMinSize(0, 0);
 
-        OverlayLayer overlay = new OverlayLayer(widthProperty(), heightProperty(), layers.heightProperty());
+        OverlayLayer overlay = new OverlayLayer(widthProperty(), heightProperty(), layers.heightProperty(), onLogin, onSignup);
         StackPane.setAlignment(overlay, Pos.TOP_CENTER);
 
         McpCardsPane cards = new McpCardsPane(overlay.expandedHeight(), overlay.heightProperty());

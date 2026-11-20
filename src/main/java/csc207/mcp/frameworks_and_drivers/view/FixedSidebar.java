@@ -11,7 +11,7 @@ public class FixedSidebar extends Sidebar {
 
     private static final double WIDTH = 50;
 
-    public FixedSidebar(Runnable onToggle) {
+    public FixedSidebar(Runnable onToggle, Runnable onHome) {
         getStyleClass().add("fixed-sidebar");
         var homeIconUrl = Objects.requireNonNull(FixedSidebar.class.getResource("/icons/lucide/house.png"));
         ImageView homeIcon = new ImageView(new Image(homeIconUrl.toExternalForm()));
@@ -23,6 +23,7 @@ public class FixedSidebar extends Sidebar {
         homeButton.getStyleClass().add("sidebar-button");
         homeButton.setAccessibleText("Home");
         homeButton.setTooltip(new Tooltip("Home"));
+        homeButton.setOnAction(event -> onHome.run());
         setMinWidth(WIDTH);
         setPrefWidth(WIDTH);
         setMaxWidth(WIDTH);

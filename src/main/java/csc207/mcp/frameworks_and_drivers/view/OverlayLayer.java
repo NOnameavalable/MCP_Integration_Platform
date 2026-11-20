@@ -33,7 +33,7 @@ public final class OverlayLayer extends Pane {
     private final DoubleBinding expandedHeight;
 
     public OverlayLayer(ReadOnlyDoubleProperty contentWidth, ReadOnlyDoubleProperty contentHeight,
-                        ObservableDoubleValue availableHeight) {
+                        ObservableDoubleValue availableHeight, Runnable onLogin, Runnable onSignup) {
         searchBar.maxWidthProperty().bind(contentWidth.multiply(SEARCH_WIDTH_FRACTION));
         DoubleBinding searchHeight = Bindings.createDoubleBinding(
                 () -> Math.clamp(contentHeight.get() * SEARCH_HEIGHT_FRACTION, MIN_SEARCH_HEIGHT, MAX_SEARCH_HEIGHT),
@@ -58,9 +58,11 @@ public final class OverlayLayer extends Pane {
         Button loginButton = new Button("Log in");
         loginButton.getStyleClass().addAll("overlay-auth-button", "overlay-login-button");
         loginButton.prefHeightProperty().bind(authButtonHeight);
+        loginButton.setOnAction(event -> onLogin.run());
         Button signupButton = new Button("Sign up");
         signupButton.getStyleClass().addAll("overlay-auth-button", "overlay-signup-button");
         signupButton.prefHeightProperty().bind(authButtonHeight);
+        signupButton.setOnAction(event -> onSignup.run());
         authControls.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
         authControls.setPickOnBounds(false);
         authControls.getChildren().addAll(loginButton, signupButton);

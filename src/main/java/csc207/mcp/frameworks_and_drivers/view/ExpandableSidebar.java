@@ -27,7 +27,8 @@ public class ExpandableSidebar extends ToggleableSidebar {
     private final DoubleProperty expansion = new SimpleDoubleProperty(1);
     private boolean expanded = true;
 
-    public ExpandableSidebar(ObservableDoubleValue layoutWidth) {
+    public ExpandableSidebar(ObservableDoubleValue layoutWidth, Runnable onAccount, Runnable onToolkit,
+                             Runnable onGateway) {
         getStyleClass().add("expandable-sidebar");
         setMinWidth(0);
         prefWidthProperty().bind(Bindings.createDoubleBinding(
@@ -37,9 +38,9 @@ public class ExpandableSidebar extends ToggleableSidebar {
         setMaxWidth(USE_PREF_SIZE);
 
         getChildren().addAll(
-                navigationButton("Account", "user-round"),
-                navigationButton("Toolkit", "wrench"),
-                navigationButton("MCP Gateway", "network"));
+                navigationButton("Account", "user-round", onAccount),
+                navigationButton("Toolkit", "wrench", onToolkit),
+                navigationButton("MCP Gateway", "network", onGateway));
 
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(widthProperty());
@@ -52,7 +53,7 @@ public class ExpandableSidebar extends ToggleableSidebar {
         });
     }
 
-    private static Button navigationButton(String label, String iconName) {
+    private static Button navigationButton(String label, String iconName, Runnable onNavigate) {
         var iconUrl = Objects.requireNonNull(
                 ExpandableSidebar.class.getResource("/icons/lucide/" + iconName + ".png"));
         ImageView icon = new ImageView(new Image(iconUrl.toExternalForm()));
@@ -62,6 +63,7 @@ public class ExpandableSidebar extends ToggleableSidebar {
         Button button = new Button(label, icon);
         button.getStyleClass().addAll("sidebar-button", "navigation-button");
         button.setMaxWidth(Double.MAX_VALUE);
+        button.setOnAction(event -> onNavigate.run());
         return button;
     }
 
