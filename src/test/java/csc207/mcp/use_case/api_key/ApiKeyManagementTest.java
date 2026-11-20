@@ -6,7 +6,6 @@ import csc207.mcp.entity.ApiKey;
 import csc207.mcp.frameworks_and_drivers.security.SecureApiKeyCredentials;
 import csc207.mcp.interface_adapter.create_api_key.*;
 import csc207.mcp.interface_adapter.revoke_api_key.*;
-import csc207.mcp.use_case.account.CurrentUserContext;
 import csc207.mcp.use_case.create_api_key.*;
 import csc207.mcp.use_case.revoke_api_key.*;
 import java.time.*;
@@ -26,14 +25,14 @@ public final class ApiKeyManagementTest {
         creation(); revocation(); presentation(); credentials();
         System.out.println("API key management checks passed: " + checks);
     }
-    private static CreateApiKeyInteractor creator(Dao dao, Created result, CurrentUserContext user,
+    private static CreateApiKeyInteractor creator(Dao dao, Created result,
             ApiKeyCredentials credentials) {
-        return new CreateApiKeyInteractor(dao, result, user, credentials,
+        return new CreateApiKeyInteractor(dao, result, credentials,
                 Clock.fixed(NOW, ZoneOffset.UTC), () -> "k1");
     }
     private static void creation() {
         Dao dao = new Dao(); Created result = new Created();
-        creator(dao, result, () -> "u1", CREDENTIALS).execute(new CreateApiKeyInputData());
+        creator(dao, result, CREDENTIALS).execute(new CreateApiKeyInputData("u1"));
         check(result.successes == 1 && result.failures == 0, "create success");
         ApiKey key = dao.keys.get("k1");
         check(key.belongsTo("u1") && key.isActive(), "session ownership and active key");
@@ -43,69 +42,65 @@ public final class ApiKeyManagementTest {
         check(result.output.getDisplayPrefix().equals(SECRET.substring(0, 12)), "safe prefix");
         for (String user : new String[]{null, "", " "}) {
             Dao rejected = new Dao(); Created error = new Created();
-            creator(rejected, error, () -> user, CREDENTIALS).execute(new CreateApiKeyInputData());
+            creator(rejected, error, CREDENTIALS).execute(new CreateApiKeyInputData(user));
             check(error.failures == 1 && rejected.saves == 0, "unauthenticated request rejected");
         }
         Created absent = new Created(); Dao untouched = new Dao();
-        creator(untouched, absent, () -> "u1", CREDENTIALS).execute(null);
+        creator(untouched, absent, CREDENTIALS).execute(null);
         check(absent.failures == 1 && untouched.saves == 0, "null request rejected");
-        Created sessionError = new Created();
-        creator(untouched, sessionError, () -> { throw new IllegalStateException("secret"); }, CREDENTIALS)
-                .execute(new CreateApiKeyInputData());
-        check(sessionError.failures == 1 && !sessionError.error.contains("secret"), "session errors sanitized");
         for (int failure : new int[]{1, 2}) {
             Dao failed = new Dao(); failed.failure = failure; Created error = new Created();
-            creator(failed, error, () -> "u1", CREDENTIALS).execute(new CreateApiKeyInputData());
+            creator(failed, error, CREDENTIALS).execute(new CreateApiKeyInputData("u1"));
             check(error.successes == 0 && error.output == null && error.failures == 1, "failed save never reveals secret");
             check(failed.keys.isEmpty() && !error.error.contains(SECRET), "failed save leaves no record in fake DAO");
         }
         for (String bad : new String[]{null, "short", " " .repeat(40)}) {
             Created error = new Created(); Dao rejected = new Dao();
-            creator(rejected, error, () -> "u1", new ApiKeyCredentials() {
+            creator(rejected, error, new ApiKeyCredentials() {
                 public String generateSecret() { return bad; }
                 public String hashSecret(String s) { throw new AssertionError("must not hash invalid secret"); }
-            }).execute(new CreateApiKeyInputData());
+            }).execute(new CreateApiKeyInputData("u1"));
             check(error.failures == 1 && rejected.saves == 0, "bad generator output rejected");
         }
         Created badHash = new Created();
-        creator(new Dao(), badHash, () -> "u1", new ApiKeyCredentials() {
+        creator(new Dao(), badHash, new ApiKeyCredentials() {
             public String generateSecret() { return SECRET; }
             public String hashSecret(String s) { return s; }
-        }).execute(new CreateApiKeyInputData());
+        }).execute(new CreateApiKeyInputData("u1"));
         check(badHash.failures == 1, "plaintext hash rejected");
         Dao saved = new Dao();
         try {
             creator(saved, new Created() {
                 public void prepareSuccessView(CreateApiKeyOutputData out) { throw new IllegalStateException("UI"); }
-            }, () -> "u1", CREDENTIALS).execute(new CreateApiKeyInputData());
+            }, CREDENTIALS).execute(new CreateApiKeyInputData("u1"));
             throw new AssertionError("expected presenter failure");
         } catch (IllegalStateException expected) { check(saved.keys.size() == 1, "presentation failure does not undo saved credential"); }
     }
     private static void revocation() {
         Dao dao = new Dao(); dao.keys.put("k1", key("u1")); Revoked result = new Revoked();
-        RevokeApiKeyInteractor revoke = new RevokeApiKeyInteractor(dao, result, () -> "u1");
-        revoke.execute(new RevokeApiKeyInputData("k1"));
+        RevokeApiKeyInteractor revoke = new RevokeApiKeyInteractor(dao, result);
+        revoke.execute(new RevokeApiKeyInputData("u1", "k1"));
         check(result.successes == 1 && !result.output.isAlreadyRevoked(), "first revocation confirmed");
         check(!dao.keys.get("k1").isActive() && dao.revokes == 1, "DAO persisted revocation");
-        revoke.execute(new RevokeApiKeyInputData("k1"));
+        revoke.execute(new RevokeApiKeyInputData("u1", "k1"));
         check(result.successes == 2 && result.output.isAlreadyRevoked() && dao.revokes == 1, "idempotent repeated revocation");
         for (String owner : new String[]{"other", null, " "}) {
             Dao denied = new Dao(); denied.keys.put("k1", key("u1")); Revoked error = new Revoked();
-            new RevokeApiKeyInteractor(denied, error, () -> owner).execute(new RevokeApiKeyInputData("k1"));
+            new RevokeApiKeyInteractor(denied, error).execute(new RevokeApiKeyInputData(owner, "k1"));
             check(error.failures == 1 && denied.revokes == 0 && denied.keys.get("k1").isActive(), "unauthorized owner rejected");
         }
         for (RevokeApiKeyInputData input : new RevokeApiKeyInputData[]{null,
-                new RevokeApiKeyInputData(null), new RevokeApiKeyInputData(" ")}) {
+                new RevokeApiKeyInputData("u1", null), new RevokeApiKeyInputData("u1", " ")}) {
             Dao denied = new Dao(); Revoked error = new Revoked();
-            new RevokeApiKeyInteractor(denied, error, () -> "u1").execute(input);
+            new RevokeApiKeyInteractor(denied, error).execute(input);
             check(error.failures == 1 && denied.lookups == 0, "invalid selection avoids DAO");
         }
         Revoked missing = new Revoked();
-        new RevokeApiKeyInteractor(new Dao(), missing, () -> "u1").execute(new RevokeApiKeyInputData("missing"));
+        new RevokeApiKeyInteractor(new Dao(), missing).execute(new RevokeApiKeyInputData("u1", "missing"));
         check(missing.failures == 1, "missing key rejected");
         for (int failure : new int[]{1, 2, 3}) {
             Dao failed = new Dao(); failed.keys.put("k1", key("u1")); failed.failure = failure; Revoked error = new Revoked();
-            new RevokeApiKeyInteractor(failed, error, () -> "u1").execute(new RevokeApiKeyInputData("k1"));
+            new RevokeApiKeyInteractor(failed, error).execute(new RevokeApiKeyInputData("u1", "k1"));
             check(error.failures == 1 && error.successes == 0, "lookup/update/race error reported");
             check(failed.keys.get("k1").isActive() && !error.error.contains("sensitive"), "no premature local mutation or internal details");
         }
@@ -114,11 +109,11 @@ public final class ApiKeyManagementTest {
         List<Runnable> queue = new ArrayList<>(); AtomicInteger displayed = new AtomicInteger();
         CreateApiKeyViewModel created = new CreateApiKeyViewModel(); AtomicInteger events = new AtomicInteger();
         created.stateProperty().addListener((o,a,b) -> events.incrementAndGet());
-        CreateApiKeyController controller = CreateApiKeyFactory.create(new Dao(), () -> "u1", created, out -> {
+        CreateApiKeyController controller = CreateApiKeyFactory.create(new Dao(), created, out -> {
             check(created.getState().isSuccessful(), "state precedes secret display");
             check(out.getRawKey().startsWith("mcp_"), "one-time display receives credential"); displayed.incrementAndGet();
         }, queue::add);
-        controller.execute();
+        controller.execute("u1");
         check(!created.getState().isSuccessful() && displayed.get() == 0 && queue.size() == 1, "creation waits for UI dispatch");
         queue.remove(0).run();
         check(displayed.get() == 1 && events.get() == 1, "one confirmed creation presentation");
@@ -134,13 +129,13 @@ public final class ApiKeyManagementTest {
         }
         Dao dao = new Dao(); dao.keys.put("k1", key("u1")); RevokeApiKeyViewModel revoked = new RevokeApiKeyViewModel();
         AtomicInteger refresh = new AtomicInteger();
-        RevokeApiKeyController revoke = RevokeApiKeyFactory.create(dao, () -> "u1", revoked, () -> {
+        RevokeApiKeyController revoke = RevokeApiKeyFactory.create(dao, revoked, () -> {
             check(revoked.getState().isSuccessful(), "state precedes profile refresh"); refresh.incrementAndGet();
         }, queue::add);
-        revoke.execute("k1");
+        revoke.execute("u1", "k1");
         check(refresh.get() == 0 && queue.size() == 1, "revocation callback queued"); queue.remove(0).run();
         check(refresh.get() == 1 && revoked.getState().getKeyId().equals("k1"), "revoke controller/factory/model integration");
-        revoke.execute("missing"); queue.remove(0).run();
+        revoke.execute("u1", "missing"); queue.remove(0).run();
         check(!revoked.getState().isSuccessful() && revoked.getState().getKeyId().isEmpty() && refresh.get() == 1, "failed revoke clears state without refresh");
         check(!(revoked.stateProperty() instanceof javafx.beans.property.Property), "read-only revocation state");
     }
@@ -158,12 +153,12 @@ public final class ApiKeyManagementTest {
     private static class Created implements CreateApiKeyOutputBoundary {
         int successes, failures; String error; CreateApiKeyOutputData output;
         public void prepareSuccessView(CreateApiKeyOutputData output) { successes++; this.output = output; }
-        public void prepareFailView(String error) { failures++; this.error = error; }
+        public void prepareFailView(String errorMessage) { failures++; error = errorMessage; }
     }
     private static final class Revoked implements RevokeApiKeyOutputBoundary {
         int successes, failures; String error; RevokeApiKeyOutputData output;
         public void prepareSuccessView(RevokeApiKeyOutputData output) { successes++; this.output = output; }
-        public void prepareFailView(String error) { failures++; this.error = error; }
+        public void prepareFailView(String errorMessage) { failures++; error = errorMessage; }
     }
     private static final class Dao implements CreateApiKeyDataAccessInterface, RevokeApiKeyDataAccessInterface {
         final Map<String,ApiKey> keys = new HashMap<>(); int failure, saves, lookups, revokes;

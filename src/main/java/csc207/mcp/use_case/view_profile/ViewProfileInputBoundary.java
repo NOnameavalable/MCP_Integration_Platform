@@ -5,8 +5,8 @@ public interface ViewProfileInputBoundary {
 
     /**
      * Loads profile information and reports through the output boundary.
-     * The user identity must come from authenticated context, not from
-     * an arbitrary user-entered profile-owner identifier.
+     * InputData carries the user ID from trusted login state, not an
+     * arbitrary user-entered profile-owner identifier.
      *
      * @param inputData the profile-view request
      */
