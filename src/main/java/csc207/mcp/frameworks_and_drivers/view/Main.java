@@ -1,5 +1,6 @@
 package csc207.mcp.frameworks_and_drivers.view;
 
+import csc207.mcp.interface_adapter.Session;
 import javafx.application.Application;
 import javafx.css.PseudoClass;
 import javafx.scene.Scene;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Main extends Application {
+    private final Session session = new Session();
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -38,6 +40,9 @@ public class Main extends Application {
         root.getStyleClass().add("root-pane");
         root.setTop(header);
         root.setLeft(new HBox(fixed, expandable));
+
+        session.addAuthStateListener(home);
+        home.onAuthStateChanged(session.isLoggedIn());
 
         PseudoClass sidebarVisible = PseudoClass.getPseudoClass("sidebar-visible");
         List<ContentView> pages = List.of(home, login, signup, account, toolkit, gateway);

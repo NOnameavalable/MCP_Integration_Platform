@@ -82,13 +82,40 @@ public final class OverlayLayer extends Pane {
         }, expandedHeight, scrollOffset));
     }
 
-    @Override
-    protected void layoutChildren() {
-        layoutInArea(authControls, 0, CONTENT_TOP, getWidth(), getHeight(), -1, HPos.RIGHT, VPos.TOP);
-        layoutSearchBar();
+    void applyAuthState(boolean loggedIn) {
+        if (loggedIn) {
+            showSignedInLayout();
+        } else {
+            showSignedOutLayout();
+        }
+        requestLayout();
     }
 
-    private void layoutSearchBar() {
+    private void showSignedInLayout() {
+        authControls.setVisible(false);
+        authControls.setManaged(false);
+    }
+
+    private void showSignedOutLayout() {
+        authControls.setVisible(true);
+        authControls.setManaged(true);
+    }
+
+    @Override
+    protected void layoutChildren() {
+        if (authControls.isManaged()) {
+            layoutInArea(authControls, 0, CONTENT_TOP, getWidth(), getHeight(), -1, HPos.RIGHT, VPos.TOP);
+            layoutSignedOutSearchBar();
+        } else {
+            layoutExpandedSearchBar();
+        }
+    }
+
+    private void layoutExpandedSearchBar() {
+        layoutInArea(searchBar, 0, 0, getWidth(), getHeight(), -1, HPos.CENTER, VPos.BOTTOM);
+    }
+
+    private void layoutSignedOutSearchBar() {
         double searchHeight = searchBar.getPrefHeight();
         double buttonTop = authControls.getLayoutY();
         double buttonHeight = authControls.getHeight();
@@ -98,7 +125,7 @@ public final class OverlayLayer extends Pane {
         double endHeight = Math.min(expandedHeight.get(), COLLAPSED_HEIGHT);
         double resizeDistance = startHeight - endHeight;
         if (resizeDistance <= 0 || getHeight() >= startHeight) {
-            layoutInArea(searchBar, 0, 0, getWidth(), getHeight(), -1, HPos.CENTER, VPos.BOTTOM);
+            layoutExpandedSearchBar();
             return;
         }
 
