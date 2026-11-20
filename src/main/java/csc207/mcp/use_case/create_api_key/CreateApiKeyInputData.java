@@ -1,7 +1,4 @@
 package csc207.mcp.use_case.create_api_key;
 
-/**
- * Account-module scaffold. TODO: implement CreateApiKeyInputData.
- */
-public class CreateApiKeyInputData {
-}
+/** No form values are needed: the owner comes from the trusted session. */
+public final class CreateApiKeyInputData { }
