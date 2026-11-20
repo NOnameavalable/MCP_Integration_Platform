@@ -15,16 +15,17 @@ import javafx.scene.layout.Pane;
 public final class OverlayLayer extends Pane {
 
     private static final double SEARCH_WIDTH_FRACTION = 0.85;
-    private static final double MAX_SEARCH_WIDTH = 850;
     private static final double SEARCH_HEIGHT_FRACTION = 0.075;
     private static final double MIN_SEARCH_HEIGHT = 44;
     private static final double MAX_SEARCH_HEIGHT = 60;
     private static final double AUTH_BUTTON_HEIGHT_FRACTION = 36.0 / 655.0;
     private static final double MIN_AUTH_BUTTON_HEIGHT = 32;
     private static final double MAX_AUTH_BUTTON_HEIGHT = 44;
+    private static final double CONTENT_TOP = 0;
     private static final double COLLAPSED_HEIGHT = 64;
     private static final double SEARCH_RESIZE_LEAD = 16;
     private static final double COLLAPSED_SEARCH_LEFT_INSET = 7;
+    private static final double COLLAPSED_SEARCH_WIDTH_FRACTION = 0.9;
     private static final double SEARCH_BUTTON_GAP = 12;
 
     private final SearchBar searchBar = new SearchBar();
@@ -33,8 +34,7 @@ public final class OverlayLayer extends Pane {
 
     public OverlayLayer(ReadOnlyDoubleProperty contentWidth, ReadOnlyDoubleProperty contentHeight,
                         ObservableDoubleValue availableHeight) {
-        searchBar.maxWidthProperty().bind(Bindings.min(
-                contentWidth.multiply(SEARCH_WIDTH_FRACTION), MAX_SEARCH_WIDTH));
+        searchBar.maxWidthProperty().bind(contentWidth.multiply(SEARCH_WIDTH_FRACTION));
         DoubleBinding searchHeight = Bindings.createDoubleBinding(
                 () -> Math.clamp(contentHeight.get() * SEARCH_HEIGHT_FRACTION, MIN_SEARCH_HEIGHT, MAX_SEARCH_HEIGHT),
                 contentHeight);
@@ -82,7 +82,7 @@ public final class OverlayLayer extends Pane {
 
     @Override
     protected void layoutChildren() {
-        layoutInArea(authControls, 0, 0, getWidth(), getHeight(), -1, HPos.RIGHT, VPos.TOP);
+        layoutInArea(authControls, 0, CONTENT_TOP, getWidth(), getHeight(), -1, HPos.RIGHT, VPos.TOP);
         layoutSearchBar();
     }
 
@@ -101,20 +101,28 @@ public final class OverlayLayer extends Pane {
         }
 
         double progress = Math.clamp((startHeight - getHeight()) / resizeDistance, 0, 1);
-        // Clear the buttons horizontally before bringing the search bar onto their row.
         double enterRowAt = Math.clamp((startHeight - buttonBottom - searchHeight) / resizeDistance, 0.2, 0.8);
-        double horizontalProgress = Math.min(1, progress / enterRowAt);
+        double approachProgress = Math.min(1, progress / enterRowAt);
         double rowProgress = Math.max(0, (progress - enterRowAt) / (1 - enterRowAt));
 
-        double expandedWidth = Math.min(getWidth(), searchBar.maxWidth(-1));
-        double collapsedWidth = Math.clamp(authControls.getLayoutX() - SEARCH_BUTTON_GAP
-                - COLLAPSED_SEARCH_LEFT_INSET, 0, expandedWidth);
         Interpolator easing = Interpolator.EASE_BOTH;
-        double width = easing.interpolate(expandedWidth, collapsedWidth, horizontalProgress);
+        double expandedWidth = Math.min(getWidth(), searchBar.maxWidth(-1));
+        double widthBesideButtons = Math.max(0, authControls.getLayoutX() - COLLAPSED_SEARCH_LEFT_INSET);
+        double collapsedWidth = Math.min(expandedWidth * COLLAPSED_SEARCH_WIDTH_FRACTION,
+                Math.max(0, widthBesideButtons - SEARCH_BUTTON_GAP));
+        // Leave room to keep narrowing after the search bar clears the buttons.
+        double widthAtRowEntry = Math.min(easing.interpolate(expandedWidth, collapsedWidth, enterRowAt),
+                widthBesideButtons - Math.min(SEARCH_BUTTON_GAP, widthBesideButtons) / 2);
+        double width = progress <= enterRowAt
+                ? easing.interpolate(expandedWidth, widthAtRowEntry, approachProgress)
+                : easing.interpolate(widthAtRowEntry, collapsedWidth, rowProgress);
         double x = easing.interpolate((getWidth() - expandedWidth) / 2,
-                COLLAPSED_SEARCH_LEFT_INSET, horizontalProgress);
-        double height = easing.interpolate(searchHeight, buttonHeight, progress);
-        double y = easing.interpolate(getHeight() - height, buttonTop, rowProgress);
+                COLLAPSED_SEARCH_LEFT_INSET, approachProgress);
+        double height = easing.interpolate(searchHeight, buttonHeight, rowProgress);
+        double yAtRowEntry = Math.max(buttonBottom, startHeight - resizeDistance * enterRowAt - searchHeight);
+        double y = progress <= enterRowAt
+                ? Math.max(buttonBottom, getHeight() - searchHeight)
+                : easing.interpolate(yAtRowEntry, CONTENT_TOP, rowProgress);
         searchBar.resizeRelocate(x, y, width, height);
     }
 }
