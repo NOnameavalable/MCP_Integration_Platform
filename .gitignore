@@ -7,6 +7,10 @@ target/
 .env.*
 !.env.example
 
+# Local SQLite database files
+data/
+*.db
+
 # Keep personal documentation local; share user stories.
 /docs/*
 !/docs/user-stories.md
