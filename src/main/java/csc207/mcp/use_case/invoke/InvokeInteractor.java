@@ -11,8 +11,8 @@ import java.util.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.List;
 import java.util.Map;
-import csc207.mcp.entity.Mcpkit;
 import csc207.mcp.entity.Tool;
 
 public class InvokeInteractor implements InvokeInputBoundary {
@@ -100,11 +100,11 @@ public class InvokeInteractor implements InvokeInputBoundary {
     }
 
     private boolean hasToolAccess(String userId, String toolName) {
-        Mcpkit mcpkit = dataAccess.findMcpKitByUserId(userId);
-        if (mcpkit == null) {
+        List<McpServer> mcpServers = dataAccess.getMcpkitByUserId(userId);
+        if (mcpServers == null) {
             return false;
         }
-        for (McpServer mcpServer : mcpkit.mcpkitGetter()) {
+        for (McpServer mcpServer : mcpServers) {
             for (Tool tool : mcpServer.getTools()) {
                 if (toolName.equals(tool.getName())) {
                     return true;
@@ -135,11 +135,11 @@ public class InvokeInteractor implements InvokeInputBoundary {
     }
 
     private JSONObject toolListRequest(String userId, Object id) {
-        Mcpkit mcpkit = dataAccess.findMcpKitByUserId(userId);
+        List<McpServer> mcpServers = dataAccess.getMcpkitByUserId(userId);
         JSONArray toolsArray = new JSONArray();
 
-        if (mcpkit != null) {
-            for (McpServer mcpServer : mcpkit.mcpkitGetter()) {
+        if (mcpServers != null) {
+            for (McpServer mcpServer : mcpServers) {
                 for (Tool tool : mcpServer.getTools()) {
                     JSONObject toolJson = new JSONObject();
                     toolJson.put("name", tool.getName());
