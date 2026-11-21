@@ -1,7 +1,7 @@
 package csc207.mcp.use_case.invoke;
 
-/**
- * Gateway-module scaffold. TODO: implement McpToolExecutor.
- */
+import java.util.Map;
+
 public interface McpToolExecutor {
+    String execute(String toolName, Map<String, Object> arguments) throws ToolExecutionException;
 }

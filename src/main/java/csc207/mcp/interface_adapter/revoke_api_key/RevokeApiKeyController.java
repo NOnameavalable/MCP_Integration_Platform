@@ -4,9 +4,9 @@ import csc207.mcp.use_case.revoke_api_key.RevokeApiKeyInputBoundary;
 import csc207.mcp.use_case.revoke_api_key.RevokeApiKeyInputData;
 import java.util.Objects;
 
-/** Converts a view action into a use-case request. */
+/** The application supplies the authenticated user ID from login state. */
 public final class RevokeApiKeyController {
     private final RevokeApiKeyInputBoundary useCase;
     public RevokeApiKeyController(RevokeApiKeyInputBoundary useCase) { this.useCase = Objects.requireNonNull(useCase); }
-    public void execute(String keyId) { useCase.execute(new RevokeApiKeyInputData(keyId)); }
+    public void execute(String userId, String keyId) { useCase.execute(new RevokeApiKeyInputData(userId, keyId)); }
 }

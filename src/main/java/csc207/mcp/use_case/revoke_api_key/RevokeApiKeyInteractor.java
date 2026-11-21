@@ -1,7 +1,6 @@
 package csc207.mcp.use_case.revoke_api_key;
 
 import csc207.mcp.entity.ApiKey;
-import csc207.mcp.use_case.account.CurrentUserContext;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -9,20 +8,16 @@ import java.util.Optional;
 public final class RevokeApiKeyInteractor implements RevokeApiKeyInputBoundary {
     private final RevokeApiKeyDataAccessInterface dataAccess;
     private final RevokeApiKeyOutputBoundary presenter;
-    private final CurrentUserContext currentUser;
     public RevokeApiKeyInteractor(RevokeApiKeyDataAccessInterface dataAccess,
-            RevokeApiKeyOutputBoundary presenter, CurrentUserContext currentUser) {
+            RevokeApiKeyOutputBoundary presenter) {
         this.dataAccess = Objects.requireNonNull(dataAccess);
         this.presenter = Objects.requireNonNull(presenter);
-        this.currentUser = Objects.requireNonNull(currentUser);
     }
     @Override public void execute(RevokeApiKeyInputData input) {
         if (input == null || input.getKeyId() == null || input.getKeyId().isBlank()) {
             presenter.prepareFailView("Please select an API key."); return;
         }
-        String owner;
-        try { owner = currentUser.getAuthenticatedUserId(); }
-        catch (RuntimeException failure) { presenter.prepareFailView("Unable to verify the current session."); return; }
+        String owner = input.getUserId();
         if (owner == null || owner.isBlank()) { presenter.prepareFailView("Please log in before revoking an API key."); return; }
         Optional<ApiKey> found;
         try { found = Objects.requireNonNull(dataAccess.findById(input.getKeyId())); }
