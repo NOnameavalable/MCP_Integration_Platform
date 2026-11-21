@@ -1,7 +1,15 @@
 package csc207.mcp.use_case.search_market;
 
-/**
- * Data access boundary skeleton for SearchMarket.
- */
+import java.util.List;
+
+/** Provides server names and search data; matching belongs to the interactor. */
 public interface SearchMarketDataAccessInterface {
+    /** Returns all available MCP server names as a non-null list, or an empty list. */
+    List<String> findAllServerNames();
+
+    /**
+     * Retrieves names, descriptions, and tool-name lists for the supplied server names.
+     * Returns a non-null list, or an empty list. Matching belongs to the interactor.
+     */
+    List<McpServerData> findSearchDataByNames(List<String> serverNames);
 }
