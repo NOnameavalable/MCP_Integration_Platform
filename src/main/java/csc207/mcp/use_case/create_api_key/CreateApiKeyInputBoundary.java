@@ -5,8 +5,8 @@ public interface CreateApiKeyInputBoundary {
 
     /**
      * Processes a key-creation request and reports through the output boundary.
-     * Ownership must be derived from the authenticated user context,
-     * not trusted from an arbitrary user-entered owner ID.
+     * InputData must carry the authenticated user ID supplied by the application,
+     * not an arbitrary user-entered owner ID.
      *
      * @param inputData the key-creation request
      */

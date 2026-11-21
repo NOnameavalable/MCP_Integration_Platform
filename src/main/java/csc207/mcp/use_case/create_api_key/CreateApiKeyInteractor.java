@@ -1,7 +1,6 @@
 package csc207.mcp.use_case.create_api_key;
 
 import csc207.mcp.entity.ApiKey;
-import csc207.mcp.use_case.account.CurrentUserContext;
 import java.time.Clock;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,30 +10,26 @@ import java.util.function.Supplier;
 public final class CreateApiKeyInteractor implements CreateApiKeyInputBoundary {
     private final CreateApiKeyDataAccessInterface dataAccess;
     private final CreateApiKeyOutputBoundary presenter;
-    private final CurrentUserContext currentUser;
     private final ApiKeyCredentials credentials;
     private final Clock clock;
     private final Supplier<String> keyIdGenerator;
 
     public CreateApiKeyInteractor(CreateApiKeyDataAccessInterface dataAccess,
-            CreateApiKeyOutputBoundary presenter, CurrentUserContext currentUser, ApiKeyCredentials credentials) {
-        this(dataAccess, presenter, currentUser, credentials, Clock.systemUTC(), () -> UUID.randomUUID().toString());
+            CreateApiKeyOutputBoundary presenter, ApiKeyCredentials credentials) {
+        this(dataAccess, presenter, credentials, Clock.systemUTC(), () -> UUID.randomUUID().toString());
     }
     public CreateApiKeyInteractor(CreateApiKeyDataAccessInterface dataAccess,
-            CreateApiKeyOutputBoundary presenter, CurrentUserContext currentUser, ApiKeyCredentials credentials,
+            CreateApiKeyOutputBoundary presenter, ApiKeyCredentials credentials,
             Clock clock, Supplier<String> keyIdGenerator) {
         this.dataAccess = Objects.requireNonNull(dataAccess);
         this.presenter = Objects.requireNonNull(presenter);
-        this.currentUser = Objects.requireNonNull(currentUser);
         this.credentials = Objects.requireNonNull(credentials);
         this.clock = Objects.requireNonNull(clock);
         this.keyIdGenerator = Objects.requireNonNull(keyIdGenerator);
     }
     @Override public void execute(CreateApiKeyInputData input) {
         if (input == null) { presenter.prepareFailView("Please provide a key creation request."); return; }
-        String owner;
-        try { owner = currentUser.getAuthenticatedUserId(); }
-        catch (RuntimeException failure) { presenter.prepareFailView("Unable to verify the current session."); return; }
+        String owner = input.getUserId();
         if (owner == null || owner.isBlank()) { presenter.prepareFailView("Please log in before creating an API key."); return; }
         ApiKey key;
         String secret;
