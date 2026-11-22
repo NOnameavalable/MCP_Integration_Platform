@@ -83,7 +83,28 @@ public class SqliteMcpkitDataAccessObject
 
     @Override
     public List<McpServer> getMcpkitByUserId(String userId) {
-        return getMcpkitByUserId(userId);
+        String sql = "SELECT m.mcp_id, m.name, m.description "
+                + "FROM user_mcpkit um "
+                + "JOIN mcp_servers m ON um.mcp_id = m.mcp_id "
+                + "WHERE um.user_id = ?";
+        try (Connection conn = dbManager.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<McpServer> servers = new ArrayList<>();
+                while (rs.next()) {
+                    McpServer server = new McpServer(
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getString("mcp_id"));
+                    loadToolsForServer(conn, server);
+                    servers.add(server);
+                }
+                return servers;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to get MCPkits by user ID", e);
+        }
     }
 
     @Override

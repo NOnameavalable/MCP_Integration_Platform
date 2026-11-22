@@ -42,13 +42,25 @@ public class SqliteUserDataAccessObject
             ps.setString(4, user.getPasswordHash());
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new UnsupportedOperationException("TODO: implement save");
+            throw new IllegalStateException("Failed to save user", e);
         }
     }
 
     @Override
     public User findByIdentifier(String identifier) {
-        String sql = "SELECT FROM users WHERE "
-        throw new UnsupportedOperationException("TODO: implement findByIdentifier");
+        String sql = "SELECT user_id, username, email, password_hash FROM users WHERE username = ? OR email = ?";
+        try (Connection conn = dbManager.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, identifier);
+            ps.setString(2, identifier);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new User(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find user by identifier", e);
+        }
+        return null;
     }
 }
