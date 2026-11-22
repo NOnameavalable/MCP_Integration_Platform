@@ -8,7 +8,7 @@ public interface SearchMarketDataAccessInterface {
     List<String> findAllServerNames();
 
     /**
-     * Retrieves names, descriptions, and tool-name lists for the supplied server names.
+     * Retrieves existing server IDs, names, descriptions, and tool-name lists for the supplied names.
      * Returns a non-null list, or an empty list. Matching belongs to the interactor.
      */
     List<McpServerData> findSearchDataByNames(List<String> serverNames);
