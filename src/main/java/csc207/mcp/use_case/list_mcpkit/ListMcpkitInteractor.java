@@ -21,14 +21,14 @@ public class ListMcpkitInteractor implements ListMcpkitInputBoundary {
         }
 
         String userId = inputData.getUserId();
-        McpServer[] mcpkit = dataAccess.getMcpkitByUserId(userId);
+        List<McpServer> mcpkit = dataAccess.getMcpkitByUserId(userId);
 
         if (mcpkit == null) {
             presenter.prepareView(new ListMcpkitOutputData(List.of(), false, "Failed to load mcpkit"));
-        } else if (mcpkit.length == 0) {
+        } else if (mcpkit.isEmpty()) {
             presenter.prepareView(new ListMcpkitOutputData(List.of(), true, "Mcpkit is empty"));
         } else {
-            presenter.prepareView(new ListMcpkitOutputData(List.of(mcpkit), true, "List mcpkit successful"));
+            presenter.prepareView(new ListMcpkitOutputData(List.copyOf(mcpkit), true, "List mcpkit successful"));
         }
     }
 }

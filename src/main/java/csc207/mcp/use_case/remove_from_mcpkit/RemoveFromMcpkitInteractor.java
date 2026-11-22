@@ -1,7 +1,6 @@
 package csc207.mcp.use_case.remove_from_mcpkit;
 
 import csc207.mcp.entity.McpServer;
-import csc207.mcp.entity.User;
 import java.util.List;
 
 public class RemoveFromMcpkitInteractor implements RemoveFromMcpkitInputBoundary {
@@ -16,27 +15,35 @@ public class RemoveFromMcpkitInteractor implements RemoveFromMcpkitInputBoundary
 
     @Override
     public void removeFromMcpkit(RemoveFromMcpkitInputData inputData) {
-        User user = dataAccess.getUserById(inputData.getUserId());
-        McpServer mcp = dataAccess.getMcpById(inputData.getMcpId());
-        List<McpServer> mcpkitList = dataAccess.getMcpkit(inputData.getUserId());
+        String userId = inputData.getUserId();
+        String mcpId = inputData.getMcpId();
+        boolean userExists = dataAccess.userExists(userId);
+        McpServer mcp = dataAccess.getMcpById(mcpId);
 
-        if (user == null || mcp == null) {
-            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(false, null, null, mcpkitList,
-                    "user not found or mcp not found");
+        if (!userExists || mcp == null) {
+            List<McpServer> currentList = userExists ? dataAccess.getMcpkitByUserId(userId) : List.of();
+            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(
+                    false, null, null, currentList, "user not found or mcp not found");
             presenter.prepareView(outputData);
             return;
         }
-        if (!user.getMcpkit().contains(mcp)) {
-            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(false, mcp.getMcpId(),
-                    mcp.getMcpName(), mcpkitList, "mcp not in user mcpkit");
+
+        List<McpServer> mcpkitList = dataAccess.getMcpkitByUserId(userId);
+        if (mcpkitList == null || !mcpkitList.contains(mcp)) {
+            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(
+                    false, mcp.getMcpId(), mcp.getMcpName(),
+                    mcpkitList == null ? List.of() : mcpkitList,
+                    "mcp not in user mcpkit");
             presenter.prepareView(outputData);
             return;
-        } else {
-            user.getMcpkit().removeTool(mcp);
-            dataAccess.removeFromUserMcpkit(user.getUserId(), inputData.getMcpId());
-            RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(true, mcp.getMcpId(),
-                    mcp.getMcpName(), mcpkitList, "mcp has been removed");
-            presenter.prepareView(outputData);
         }
+
+        dataAccess.removeFromUserMcpkit(userId, mcpId);
+        List<McpServer> updatedMcpkit = dataAccess.getMcpkitByUserId(userId);
+        RemoveFromMcpkitOutputData outputData = new RemoveFromMcpkitOutputData(
+                true, mcp.getMcpId(), mcp.getMcpName(),
+                updatedMcpkit == null ? List.of() : updatedMcpkit,
+                "mcp has been removed");
+        presenter.prepareView(outputData);
     }
 }
