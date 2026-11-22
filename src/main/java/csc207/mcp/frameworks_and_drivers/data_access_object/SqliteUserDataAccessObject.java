@@ -32,6 +32,20 @@ public class SqliteUserDataAccessObject
     }
 
     @Override
+    public boolean existsByEmail(String email) {
+        String sql = "SELECT 1 FROM users WHERE trim(email) = trim(?) COLLATE NOCASE";
+        try (Connection conn = dbManager.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check if email exists", e);
+        }
+    }
+
+    @Override
     public void save(User user) {
         String sql = "INSERT INTO users (user_id, username, email, password_hash) VALUES (?, ?, ?, ?) ";
         try (Connection conn = dbManager.getConnection();
@@ -42,13 +56,17 @@ public class SqliteUserDataAccessObject
             ps.setString(4, user.getPasswordHash());
             ps.executeUpdate();
         } catch (SQLException e) {
+            if (e instanceof org.sqlite.SQLiteException sqliteFailure
+                    && sqliteFailure.getResultCode() == org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE) {
+                throw new IllegalArgumentException("Username or email is already registered", e);
+            }
             throw new IllegalStateException("Failed to save user", e);
         }
     }
 
     @Override
     public User findByIdentifier(String identifier) {
-        String sql = "SELECT user_id, username, email, password_hash FROM users WHERE username = ? OR email = ?";
+        String sql = "SELECT user_id, username, email, password_hash FROM users WHERE username = ? OR trim(email) = trim(?) COLLATE NOCASE";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identifier);

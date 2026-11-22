@@ -83,6 +83,9 @@ public class SqliteDatabaseManager {
         try (Connection conn = DriverManager.getConnection(dbUrl);
                 Statement stmt = conn.createStatement()) {
             stmt.execute(createTableSql);
+            // Also upgrades existing tables; conflicting accounts are never deleted.
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique "
+                    + "ON users(trim(email) COLLATE NOCASE)");
             stmt.execute(createApiKeysTable);
             stmt.execute(createMcpServersTable);
             stmt.execute(createToolsTable);
