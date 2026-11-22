@@ -25,6 +25,7 @@ public class SqliteMcpkitDataAccessObject
     @Override
     public boolean userExists(String userId) {
         String sql = "SELECT 1 FROM users WHERE user_id = ?";
+
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);
@@ -39,6 +40,7 @@ public class SqliteMcpkitDataAccessObject
     @Override
     public McpServer getMcpById(String mcpId) {
         String sql = "SELECT mcp_id, name, description FROM mcp_servers WHERE mcp_id = ?";
+
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, mcpId);
@@ -60,6 +62,7 @@ public class SqliteMcpkitDataAccessObject
 
     private void loadToolsForServer(Connection conn, McpServer server) throws SQLException {
         String sql = "SELECT name, description, parameters_json FROM tools WHERE mcp_id = ?";
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, server.getMcpId());
             try (ResultSet rs = ps.executeQuery()) {
@@ -80,16 +83,19 @@ public class SqliteMcpkitDataAccessObject
 
     @Override
     public List<McpServer> getMcpkitByUserId(String userId) {
-        // TODO: SELECT s.mcp_id, s.name, s.description
-        // FROM user_mcpkit um JOIN mcp_servers s ON um.mcp_id = s.mcp_id
-        // WHERE um.user_id = ?
-        // Load tools for each McpServer and return the list
-        throw new UnsupportedOperationException("TODO: implement getMcpkitByUserId");
+        return getMcpkitByUserId(userId);
     }
 
     @Override
     public void removeFromUserMcpkit(String userId, String mcpId) {
-        // TODO: DELETE FROM user_mcpkit WHERE user_id = ? AND mcp_id = ?
-        throw new UnsupportedOperationException("TODO: implement removeFromUserMcpkit");
+        String sql = "DELETE FROM user_mcpkit WHERE user_id = ? AND mcp_id = ?";
+        try (Connection conn = dbManager.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.setString(2, mcpId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to remove MCP from user's MCPkit", e);
+        }
     }
 }
