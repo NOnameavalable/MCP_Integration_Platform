@@ -2,28 +2,43 @@ package csc207.mcp.frameworks_and_drivers.gateway;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteApiKeyDataAccessObject;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteDatabaseManager;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteMcpkitDataAccessObject;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteUserDataAccessObject;
 import csc207.mcp.interface_adapter.invoke.GatewayHandler;
 import csc207.mcp.interface_adapter.invoke.InvokeResponse;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-
 import org.json.JSONObject;
 
+/** HTTP server hosting the /mcp tool invocation gateway and /db/ SQLite DAO endpoints. */
 public class McpGatewayServer {
     private final HttpServer server;
     private final GatewayHandler handler;
     private final Semaphore semaphore;
 
-    public McpGatewayServer(GatewayHandler handler, int port, int maxConcurrent) throws IOException {
+    public McpGatewayServer(GatewayHandler handler, int port, int maxConcurrent,
+            SqliteDatabaseManager databaseManager, String internalSecret) throws IOException {
+        Objects.requireNonNull(databaseManager, "databaseManager must not be null");
+        String validatedSecret = DbHttpSupport.requireSecret(internalSecret);
+
+        SqliteUserDataAccessObject userDao = new SqliteUserDataAccessObject(databaseManager);
+        SqliteApiKeyDataAccessObject apiKeyDao = new SqliteApiKeyDataAccessObject(databaseManager);
+        SqliteMcpkitDataAccessObject mcpkitDao = new SqliteMcpkitDataAccessObject(databaseManager);
+
         this.handler = handler;
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
         this.semaphore = new Semaphore(maxConcurrent);
         this.server.createContext("/mcp", this::handleRequest);
+        this.server.createContext("/db/users", new UserDbHttpHandler(userDao, validatedSecret));
+        this.server.createContext("/db/api-keys", new ApiKeyDbHttpHandler(apiKeyDao, validatedSecret));
+        this.server.createContext("/db/mcpkit", new McpkitDbHttpHandler(mcpkitDao, validatedSecret));
         this.server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
     }
 
@@ -62,7 +77,6 @@ public class McpGatewayServer {
         } finally {
             semaphore.release();
         }
-
     }
 
     private String extractApiKey(String authHeader) {
@@ -90,12 +104,13 @@ public class McpGatewayServer {
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(statusCode, bytes.length);
 
-        OutputStream os = exchange.getResponseBody();
-        try {
+        try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);
-        } finally {
-            os.close();
         }
+    }
+
+    public int getPort() {
+        return server.getAddress().getPort();
     }
 
     public void start() {
