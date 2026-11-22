@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
+import java.util.ArrayList;
 
 /** SQLite DAO for gateway invocation authentication and tool authorization. */
 public class SqliteInvokeDataAccessObject implements InvokeDataAccessInterface {
@@ -54,14 +55,17 @@ public class SqliteInvokeDataAccessObject implements InvokeDataAccessInterface {
         String sql = "SELECT mcp_id FROM mcp_kits WHERE user_id = ?";
         try (Connection conn = dbManager.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setString(1, userId);
-                    try (ResultSet rs = ps.executeQuery();
-                        
-                    )
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<McpServer> servers = new ArrayList<>();
+                while (rs.next()) {
+                    servers.add(mcpkitDao.getMcpById(rs.getString("mcp_id")));
                 }
+                return servers;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to get MCPkits by user ID", e);
+        }
 
-
-
-        return mcpkitDao.getMcpkitByUserId(userId);
     }
 }
