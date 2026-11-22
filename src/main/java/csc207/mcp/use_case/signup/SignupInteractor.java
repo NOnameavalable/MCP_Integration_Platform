@@ -41,6 +41,10 @@ public final class SignupInteractor implements SignupInputBoundary {
         boolean exists;
         try {
             exists = dataAccess.existsByUsername(username);
+            if (!exists && dataAccess.existsByEmail(email)) {
+                presenter.prepareFailView("This email is already registered.");
+                return;
+            }
         } catch (IllegalStateException failure) {
             presenter.prepareFailView("Registration is temporarily unavailable. Please try again.");
             return;
@@ -62,8 +66,8 @@ public final class SignupInteractor implements SignupInputBoundary {
         try {
             dataAccess.save(user);
         } catch (IllegalArgumentException conflict) {
-            // The DAO must enforce uniqueness even if the earlier check passed.
-            presenter.prepareFailView("This username is already registered.");
+            // The DAO must enforce uniqueness even if the earlier checks passed.
+            presenter.prepareFailView("This username or email is already registered.");
             return;
         } catch (IllegalStateException failure) {
             presenter.prepareFailView("The account could not be saved. Please try again.");
