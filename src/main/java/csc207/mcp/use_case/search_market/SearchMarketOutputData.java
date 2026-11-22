@@ -3,7 +3,7 @@ package csc207.mcp.use_case.search_market;
 import java.util.List;
 import java.util.Objects;
 
-/** Immutable search results containing server names, descriptions, and tool names. */
+/** Immutable search results containing server IDs, names, descriptions, and tool names. */
 public final class SearchMarketOutputData {
     private final String keyword;
     private final List<McpServerData> results;

@@ -23,6 +23,9 @@ public final class CommonsTextNameScorer implements NameScorer {
 
         int actualScore = fuzzyScore.fuzzyScore(name, query);
         int maximumScore = fuzzyScore.fuzzyScore(query, query);
+        if (maximumScore <= 0) {
+            return 0.0;
+        }
         return (double) actualScore / maximumScore;
     }
 
