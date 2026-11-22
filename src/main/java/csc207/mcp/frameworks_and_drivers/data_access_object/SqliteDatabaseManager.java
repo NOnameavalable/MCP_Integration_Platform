@@ -12,11 +12,11 @@ public class SqliteDatabaseManager {
     private final String dbUrl;
 
     public SqliteDatabaseManager(String dbFilePath) {
-        this.dbUrl = "dbUrl:sqllite:" + dbFilePath;
+        this.dbUrl = "jdbc:sqlite:" + dbFilePath;
         ensureParentDirectoryExists(dbFilePath);
     }
 
-    public void ensureParentDirectoryExists(String dbFilePath) {
+    private void ensureParentDirectoryExists(String dbFilePath) {
         Path dbPath = Path.of(dbFilePath);
         Path parentDir = dbPath.getParent();
         if (parentDir != null) {
@@ -90,6 +90,14 @@ public class SqliteDatabaseManager {
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize tables", e);
         }
+    }
+
+    public Connection getConnection() throws SQLException {
+        Connection conn = DriverManager.getConnection(dbUrl);
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("PRAGMA foreign_keys = ON;");
+        }
+        return conn;
     }
 
 }
