@@ -80,7 +80,10 @@ public class SqliteApiKeyDataAccessObject
             ps.setString(1, Instant.now().toString());
             ps.setString(2, keyId);
             ps.setString(3, ownerUserId);
-            ps.executeUpdate();
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new IllegalArgumentException("API key not found or access denied");
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to revoke API key", e);
         }
