@@ -1,0 +1,151 @@
+/* Compact MCP card (300 x 200) */
+.mcp-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 20;
+    -fx-border-color: #E2E6EC;
+    -fx-border-width: 1;
+    -fx-border-radius: 20;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(51, 57, 67, 0.06), 8, 0, 0, 2);
+}
+
+.mcp-card:hover {
+    -fx-border-color: #C4CAD2;
+    -fx-effect: dropshadow(gaussian, rgba(51, 57, 67, 0.12), 18, 0, 0, 6);
+}
+
+.mcp-card-title {
+    -fx-text-fill: #333943;
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+}
+
+.mcp-card-space-hint {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 10.5px;
+    -fx-text-fill: #636C7B;
+    -fx-background-color: #F4F5F7;
+    -fx-background-radius: 6;
+    -fx-border-color: #E2E6EC;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 2 6 2 6;
+}
+
+.mcp-tool-chip {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 12px;
+    -fx-text-fill: #445063;
+    -fx-background-color: #EBEDF0;
+    -fx-background-radius: 7;
+    -fx-padding: 3 9 3 9;
+}
+
+.mcp-tool-chip:hover {
+    -fx-background-color: #E1E6ED;
+}
+
+.mcp-card-more-label {
+    -fx-text-fill: #636C7B;
+    -fx-font-size: 12.5px;
+}
+
+.mcp-add-button {
+    -fx-background-color: #16A34A;
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 15 6 15;
+    -fx-cursor: hand;
+}
+
+.mcp-add-button:hover {
+    -fx-background-color: #15803D;
+}
+
+.mcp-add-button:pressed {
+    -fx-background-color: #166534;
+}
+
+.mcp-add-button:added {
+    -fx-background-color: #E8F5ED;
+    -fx-text-fill: #15803D;
+}
+
+.mcp-add-button:added:hover {
+    -fx-background-color: #DCFCE7;
+}
+
+/* Expanded MCP card overlay (max 540 x 500) */
+.expanded-mcp-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 24;
+    -fx-border-color: #C4CAD2;
+    -fx-border-width: 1;
+    -fx-border-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(51, 57, 67, 0.22), 54, 0, 0, 22);
+}
+
+.expanded-mcp-header {
+    -fx-padding: 22 24 14 24;
+}
+
+.expanded-mcp-title {
+    -fx-text-fill: #333943;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.expanded-mcp-release-hint {
+    -fx-font-size: 12px;
+    -fx-text-fill: #636C7B;
+    -fx-background-color: #F4F5F7;
+    -fx-background-radius: 999;
+    -fx-border-color: #E2E6EC;
+    -fx-border-width: 1;
+    -fx-border-radius: 999;
+    -fx-padding: 4 10 4 10;
+}
+
+.expanded-mcp-body {
+    -fx-padding: 0 24 16 24;
+}
+
+.expanded-mcp-section-label {
+    -fx-text-fill: #636C7B;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.expanded-mcp-description {
+    -fx-text-fill: #445063;
+    -fx-font-size: 14px;
+}
+
+.expanded-mcp-tool-row {
+    -fx-background-color: #F8F9FB;
+    -fx-background-radius: 12;
+    -fx-border-color: #EAEEF3;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-padding: 10 12 10 12;
+}
+
+.expanded-mcp-tool-params {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 11.5px;
+    -fx-text-fill: #636C7B;
+}
+
+.expanded-mcp-tool-desc {
+    -fx-text-fill: #636C7B;
+    -fx-font-size: 13px;
+}
+
+.expanded-mcp-footer {
+    -fx-padding: 14 24 18 24;
+    -fx-border-color: #EAEEF3 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
