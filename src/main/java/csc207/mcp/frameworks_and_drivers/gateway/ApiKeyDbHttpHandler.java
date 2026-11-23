@@ -10,7 +10,6 @@ import java.util.Objects;
 import java.util.Optional;
 import org.json.JSONObject;
 
-/** HTTP handler exposing SqliteApiKeyDataAccessObject under /db/api-keys/. */
 public final class ApiKeyDbHttpHandler implements HttpHandler {
     private final SqliteApiKeyDataAccessObject apiKeyDao;
     private final String internalSecret;

@@ -4,14 +4,19 @@ import csc207.mcp.entity.ApiKey;
 import csc207.mcp.entity.McpServer;
 import csc207.mcp.entity.User;
 import csc207.mcp.frameworks_and_drivers.gateway.McpGatewayServer;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import org.json.JSONObject;
 
-/** End-to-end integration test for Http*DataAccessObject <-> McpGatewayServer <-> SQLite. */
 public final class HttpDaoIntegrationTest {
     private static int checks;
 
@@ -84,6 +89,36 @@ public final class HttpDaoIntegrationTest {
             Optional<ApiKey> revokedKey = apiKeyDao.findById("k1");
             check(revokedKey.isPresent() && !revokedKey.get().isActive(), "Revoked API key is marked inactive");
 
+            // Malformed timestamp fields on /db/api-keys/save must return 400 (not 500)
+            HttpClient rawHttp = HttpClient.newHttpClient();
+            assertMalformedApiKeyTimestampReturns400(rawHttp, baseUrl, secret, "createdAt",
+                    new JSONObject()
+                            .put("keyId", "k-bad-created")
+                            .put("ownerUserId", "u1")
+                            .put("keyHash", "key-hash-bad")
+                            .put("displayPrefix", "mcp_bad1")
+                            .put("createdAt", "not-a-date")
+                            .put("lastUsedAt", JSONObject.NULL)
+                            .put("revokedAt", JSONObject.NULL));
+            assertMalformedApiKeyTimestampReturns400(rawHttp, baseUrl, secret, "lastUsedAt",
+                    new JSONObject()
+                            .put("keyId", "k-bad-last-used")
+                            .put("ownerUserId", "u1")
+                            .put("keyHash", "key-hash-bad")
+                            .put("displayPrefix", "mcp_bad2")
+                            .put("createdAt", "2026-01-01T00:00:00Z")
+                            .put("lastUsedAt", "not-a-date")
+                            .put("revokedAt", JSONObject.NULL));
+            assertMalformedApiKeyTimestampReturns400(rawHttp, baseUrl, secret, "revokedAt",
+                    new JSONObject()
+                            .put("keyId", "k-bad-revoked")
+                            .put("ownerUserId", "u1")
+                            .put("keyHash", "key-hash-bad")
+                            .put("displayPrefix", "mcp_bad3")
+                            .put("createdAt", "2026-01-01T00:00:00Z")
+                            .put("lastUsedAt", JSONObject.NULL)
+                            .put("revokedAt", "not-a-date"));
+
             // 4. Mcpkit DAO over HTTP
             try (var conn = db.getConnection(); var stmt = conn.createStatement()) {
                 stmt.execute("INSERT INTO mcp_servers (mcp_id, name, description) "
@@ -122,6 +157,21 @@ public final class HttpDaoIntegrationTest {
                 }
             }
         }
+    }
+
+    private static void assertMalformedApiKeyTimestampReturns400(
+            HttpClient rawHttp, String baseUrl, String secret, String fieldName, JSONObject payload)
+            throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/db/api-keys/save"))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("X-Internal-Secret", secret)
+                .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> res = rawHttp.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        JSONObject body = new JSONObject(res.body());
+        check(res.statusCode() == 400 && body.has("error"),
+                "Malformed " + fieldName + " returns 400 with error payload");
     }
 
     private static void check(boolean condition, String message) {

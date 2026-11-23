@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.format.DateTimeParseException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/** Shared HTTP validation, authentication, and JSON helpers for /db/ handlers. */
 final class DbHttpSupport {
     static final String SECRET_HEADER = "X-Internal-Secret";
 
@@ -60,6 +60,8 @@ final class DbHttpSupport {
             action.handle(path, requestBody);
         } catch (JSONException e) {
             sendError(exchange, 400, "Missing or invalid JSON field: " + e.getMessage());
+        } catch (DateTimeParseException e) {
+            sendError(exchange, 400, "Invalid timestamp format: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             sendError(exchange, 409, e.getMessage() != null ? e.getMessage() : "Invalid request");
         } catch (Exception e) {

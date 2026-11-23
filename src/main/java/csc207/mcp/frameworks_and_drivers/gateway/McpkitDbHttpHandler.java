@@ -11,7 +11,6 @@ import java.util.Objects;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** HTTP handler exposing SqliteMcpkitDataAccessObject under /db/mcpkit/. */
 public final class McpkitDbHttpHandler implements HttpHandler {
     private final SqliteMcpkitDataAccessObject mcpkitDao;
     private final String internalSecret;

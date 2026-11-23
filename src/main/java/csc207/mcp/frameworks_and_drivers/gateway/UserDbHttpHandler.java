@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Objects;
 import org.json.JSONObject;
 
-/** HTTP handler exposing SqliteUserDataAccessObject under /db/users/. */
 public final class UserDbHttpHandler implements HttpHandler {
     private final SqliteUserDataAccessObject userDao;
     private final String internalSecret;
