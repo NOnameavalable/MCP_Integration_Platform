@@ -41,6 +41,7 @@ public final class SignupContentTest {
     AtomicBoolean failSave = new AtomicBoolean();
     SignupDataAccessInterface dao = new SignupDataAccessInterface() {
       public boolean existsByUsername(String username) { return realDao.existsByUsername(username); }
+      public boolean existsByEmail(String email) { return realDao.existsByEmail(email); }
       public void save(User user) {
         if (failSave.get()) { throw new IllegalStateException("private database details"); }
         realDao.save(user);

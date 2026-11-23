@@ -82,7 +82,12 @@ public class SqliteDatabaseManager {
 
         try (Connection conn = DriverManager.getConnection(dbUrl);
                 Statement stmt = conn.createStatement()) {
+            stmt.execute("PRAGMA journal_mode = WAL;");
+            stmt.execute("PRAGMA busy_timeout = 5000;");
             stmt.execute(createTableSql);
+            // Also upgrades existing tables; conflicting accounts are never deleted.
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique "
+                    + "ON users(trim(email) COLLATE NOCASE)");
             stmt.execute(createApiKeysTable);
             stmt.execute(createMcpServersTable);
             stmt.execute(createToolsTable);
@@ -96,6 +101,7 @@ public class SqliteDatabaseManager {
         Connection conn = DriverManager.getConnection(dbUrl);
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("PRAGMA foreign_keys = ON;");
+            stmt.execute("PRAGMA busy_timeout = 5000;");
         }
         return conn;
     }

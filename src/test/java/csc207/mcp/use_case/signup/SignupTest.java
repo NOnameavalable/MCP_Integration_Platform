@@ -82,7 +82,7 @@ public final class SignupTest {
         check(result.failures == 1 && duplicate.saves == 0, "duplicate rejected");
         check(duplicate.users.get("alice") == existing, "existing account unchanged");
 
-        for (int failure = 1; failure <= 3; failure++) {
+        for (int failure = 1; failure <= 4; failure++) {
             MemoryDao dao = new MemoryDao();
             dao.failure = failure;
             Result output = new Result();
@@ -215,6 +215,10 @@ public final class SignupTest {
             lookups++;
             if (failure == 1) { throw new IllegalStateException("internal-sensitive-detail"); }
             return users.containsKey(username);
+        }
+        @Override public boolean existsByEmail(String email) {
+            if (failure == 4) { throw new IllegalStateException("internal-sensitive-detail"); }
+            return users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(email.strip()));
         }
         @Override public void save(User user) {
             saves++;

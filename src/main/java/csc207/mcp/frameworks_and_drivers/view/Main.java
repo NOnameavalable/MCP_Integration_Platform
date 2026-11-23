@@ -116,6 +116,11 @@ public class Main extends Application {
             }
 
             @Override
+            public boolean existsByEmail(String email) {
+                return dao().existsByEmail(email);
+            }
+
+            @Override
             public void save(User user) {
                 dao().save(user);
             }

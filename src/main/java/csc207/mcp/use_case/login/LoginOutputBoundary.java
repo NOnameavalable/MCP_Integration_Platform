@@ -7,7 +7,7 @@ public interface LoginOutputBoundary {
     /**
      * Presents a successful login result.
      *
-     * @param data the login result, excluding passwords
+     * @param data the authenticated user's account data
      */
     void prepareSuccessView(LoginOutputData data);
 
