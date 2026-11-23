@@ -1,21 +1,35 @@
 package csc207.mcp.frameworks_and_drivers.view;
 
+import csc207.mcp.app.SignupFactory;
+import csc207.mcp.entity.User;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteDatabaseManager;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteUserDataAccessObject;
 import csc207.mcp.interface_adapter.Session;
+import csc207.mcp.interface_adapter.signup.SignupViewModel;
+import csc207.mcp.use_case.signup.SignupDataAccessInterface;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javafx.application.Application;
 import javafx.css.PseudoClass;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
-
+/** Composes the desktop pages and their application dependencies. */
 public class Main extends Application {
     private final Session session = new Session();
+    private final ExecutorService signupWorker = Executors.newSingleThreadExecutor(action -> {
+        Thread worker = new Thread(action, "signup-worker");
+        worker.setDaemon(true);
+        return worker;
+    });
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -28,7 +42,18 @@ public class Main extends Application {
         BorderPane root = new BorderPane();
         Header header = new PlatformHeader();
         ContentView login = new LoginContent();
-        ContentView signup = new SignupContent();
+        SignupViewModel signupModel = new SignupViewModel();
+        var signupController = SignupFactory.create(signupDataAccess(), signupModel, () -> {
+            root.setCenter(login);
+            Alert confirmation = new Alert(Alert.AlertType.INFORMATION);
+            confirmation.initOwner(stage);
+            confirmation.setTitle("Account created");
+            confirmation.setHeaderText("Your account is ready");
+            confirmation.setContentText("You can now log in with your username or email.");
+            confirmation.show();
+        });
+        ContentView signup = new SignupContent(signupController, signupModel,
+                () -> root.setCenter(login), signupWorker);
         ContentView account = new AccountContent();
         ContentView toolkit = new ToolkitContent();
         ContentView gateway = new McpGatewayContent();
@@ -63,6 +88,38 @@ public class Main extends Application {
         stage.setScene(scene);
         header.configureWindow(stage);
         stage.show();
+    }
+
+    @Override
+    public void stop() {
+        signupWorker.shutdownNow();
+    }
+
+    /** Initialize schema on the registration worker, rather than blocking the JavaFX thread. */
+    private SignupDataAccessInterface signupDataAccess() {
+        return new SignupDataAccessInterface() {
+            private SqliteUserDataAccessObject delegate;
+
+            private SqliteUserDataAccessObject dao() {
+                if (delegate == null) {
+                    SqliteDatabaseManager database = new SqliteDatabaseManager(
+                            System.getProperty("mcp.database.path", "data/mcp-platform.db"));
+                    database.initializeTables();
+                    delegate = new SqliteUserDataAccessObject(database);
+                }
+                return delegate;
+            }
+
+            @Override
+            public boolean existsByUsername(String username) {
+                return dao().existsByUsername(username);
+            }
+
+            @Override
+            public void save(User user) {
+                dao().save(user);
+            }
+        };
     }
 
     private static String stylesheet(String name) {

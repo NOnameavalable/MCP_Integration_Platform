@@ -1,0 +1,51 @@
+.signup-scroll,
+.signup-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.signup-wrapper {
+    -fx-padding: 8 8 12 8;
+}
+
+.signup-form {
+    -fx-padding: 8;
+}
+
+.signup-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333943;
+}
+
+.signup-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #636C7B;
+    -fx-padding: 0 0 12 0;
+}
+
+.signup-field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #445063;
+}
+
+.signup-input {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 12;
+    -fx-padding: 8 12;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333943;
+    -fx-prompt-text-fill: #778293;
+}
+
+.signup-input:focused {
+    -fx-border-color: #586B84;
+    -fx-effect: dropshadow(gaussian, rgba(88, 107, 132, 0.12), 5, 0, 0, 0);
+}
+
+.signup-message {
+    -fx-text-fill: #B42318;
+    -fx-font-size: 13px;
+}
