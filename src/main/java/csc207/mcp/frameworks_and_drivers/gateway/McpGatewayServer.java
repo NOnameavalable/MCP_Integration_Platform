@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteApiKeyDataAccessObject;
 import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteDatabaseManager;
+import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteLoadMcpsDataAccessObject;
 import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteMcpkitDataAccessObject;
 import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteUserDataAccessObject;
 import csc207.mcp.interface_adapter.invoke.GatewayHandler;
@@ -31,6 +32,7 @@ public class McpGatewayServer {
         SqliteUserDataAccessObject userDao = new SqliteUserDataAccessObject(databaseManager);
         SqliteApiKeyDataAccessObject apiKeyDao = new SqliteApiKeyDataAccessObject(databaseManager);
         SqliteMcpkitDataAccessObject mcpkitDao = new SqliteMcpkitDataAccessObject(databaseManager);
+        SqliteLoadMcpsDataAccessObject loadMcpsDao = new SqliteLoadMcpsDataAccessObject(databaseManager);
 
         this.handler = handler;
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -39,6 +41,7 @@ public class McpGatewayServer {
         this.server.createContext("/db/users", new UserDbHttpHandler(userDao, validatedSecret));
         this.server.createContext("/db/api-keys", new ApiKeyDbHttpHandler(apiKeyDao, validatedSecret));
         this.server.createContext("/db/mcpkit", new McpkitDbHttpHandler(mcpkitDao, validatedSecret));
+        this.server.createContext("/db/mcps", new LoadMcpsDbHttpHandler(loadMcpsDao, validatedSecret));
         this.server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
     }
 

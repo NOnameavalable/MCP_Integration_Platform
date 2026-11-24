@@ -1,5 +1,6 @@
 package csc207.mcp.frameworks_and_drivers.view;
 
+import csc207.mcp.interface_adapter.MarketViewModel;
 import csc207.mcp.interface_adapter.Session;
 import javafx.application.Application;
 import javafx.css.PseudoClass;
@@ -16,6 +17,7 @@ import java.util.Objects;
 
 public class Main extends Application {
     private final Session session = new Session();
+    private final MarketViewModel marketViewModel = new MarketViewModel();
 
     @Override
     public void start(Stage stage) throws IOException {
