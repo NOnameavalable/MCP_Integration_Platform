@@ -1,6 +1,5 @@
 package csc207.mcp.entity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -8,46 +7,24 @@ import java.util.UUID;
 /**
  * Represents an MCP server and all the tools it provides.
  */
-public class McpServer {
-    private String name;
-    private String description;
-    private List<Tool> tools;
-    private String mcpId;
-
+public class McpServer extends Mcp {
     public McpServer(String name, String description) {
         this(name, description, UUID.randomUUID().toString());
     }
 
     public McpServer(String name, String description, String mcpId) {
-        this.name = name;
-        this.description = description;
-        this.tools = new ArrayList<>();
-        this.mcpId = mcpId;
-    }
-
-    public String getMcpName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public List<Tool> getTools() {
-        return tools;
-    }
-
-    public String getMcpId() {
-        return mcpId;
+        super(name, description, mcpId, List.of());
     }
 
     public void addTool(Tool tool) {
+        List<Tool> tools = getTools();
         if (!tools.contains(tool)) {
             tools.add(tool);
         }
     }
 
     public boolean removeTool(String toolName) {
+        List<Tool> tools = getTools();
         for (Tool t : tools) {
             if (t.getName().equals(toolName)) {
                 tools.remove(t);
@@ -64,11 +41,11 @@ public class McpServer {
         if (!(obj instanceof McpServer))
             return false;
         McpServer other = (McpServer) obj;
-        return Objects.equals(this.mcpId, other.mcpId);
+        return Objects.equals(getMcpId(), other.getMcpId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(mcpId);
+        return Objects.hashCode(getMcpId());
     }
 }
