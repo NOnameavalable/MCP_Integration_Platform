@@ -38,22 +38,6 @@ public final class SignupInteractor implements SignupInputBoundary {
         // Normalize outer whitespace only; do not change case or alter passwords.
         String username = inputData.getUsername().strip();
         String email = inputData.getEmail().strip();
-        boolean exists;
-        try {
-            exists = dataAccess.existsByUsername(username);
-            if (!exists && dataAccess.existsByEmail(email)) {
-                presenter.prepareFailView("This email is already registered.");
-                return;
-            }
-        } catch (IllegalStateException failure) {
-            presenter.prepareFailView("Registration is temporarily unavailable. Please try again.");
-            return;
-        }
-        if (exists) {
-            presenter.prepareFailView("This username is already registered.");
-            return;
-        }
-
         User user;
         try {
             String passwordHash = passwordHasher.hash(inputData.getPassword());

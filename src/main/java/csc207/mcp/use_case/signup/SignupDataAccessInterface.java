@@ -6,21 +6,9 @@ import csc207.mcp.entity.User;
 public interface SignupDataAccessInterface {
 
     /**
-     * Checks whether the username is already registered.
-     *
-     * @param username the username to check
-     * @return true if an account with this username exists
-     * @throws IllegalStateException if storage cannot be queried
-     */
-    boolean existsByUsername(String username);
-
-    /** Checks email availability, ignoring ASCII letter case and outer spaces. */
-    boolean existsByEmail(String email);
-
-    /**
      * Saves a new user, including their email and password hash.
      * The implementation must reject duplicate usernames or emails without overwriting
-     * an existing account, even if a prior availability check succeeded.
+     * an existing account. Uniqueness must be enforced during the insert.
      *
      * @param user the new user to persist
      * @throws IllegalArgumentException if the username or email is already registered
