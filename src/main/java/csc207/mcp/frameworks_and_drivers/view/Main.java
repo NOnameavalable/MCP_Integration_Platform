@@ -2,8 +2,8 @@ package csc207.mcp.frameworks_and_drivers.view;
 
 import csc207.mcp.app.SignupFactory;
 import csc207.mcp.entity.User;
-import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteDatabaseManager;
-import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteUserDataAccessObject;
+import csc207.mcp.frameworks_and_drivers.data_access_object.HttpDbClient;
+import csc207.mcp.frameworks_and_drivers.data_access_object.HttpUserDataAccessObject;
 import csc207.mcp.interface_adapter.Session;
 import csc207.mcp.interface_adapter.signup.SignupViewModel;
 import csc207.mcp.use_case.signup.SignupDataAccessInterface;
@@ -48,7 +48,7 @@ public class Main extends Application {
             Alert confirmation = new Alert(Alert.AlertType.INFORMATION);
             confirmation.initOwner(stage);
             confirmation.setTitle("Account created");
-            confirmation.setHeaderText("Your account is ready");
+            confirmation.setHeaderText("Welcome, " + signupModel.getUsername() + "!");
             confirmation.setContentText("You can now log in with your username or email.");
             confirmation.show();
         });
@@ -95,17 +95,21 @@ public class Main extends Application {
         signupWorker.shutdownNow();
     }
 
-    /** Initialize schema on the registration worker, rather than blocking the JavaFX thread. */
+    /** Lazily connects registration to the configured remote database API. */
     private SignupDataAccessInterface signupDataAccess() {
         return new SignupDataAccessInterface() {
-            private SqliteUserDataAccessObject delegate;
+            private HttpUserDataAccessObject delegate;
 
-            private SqliteUserDataAccessObject dao() {
+            private HttpUserDataAccessObject dao() {
                 if (delegate == null) {
-                    SqliteDatabaseManager database = new SqliteDatabaseManager(
-                            System.getProperty("mcp.database.path", "data/mcp-platform.db"));
-                    database.initializeTables();
-                    delegate = new SqliteUserDataAccessObject(database);
+                    String baseUrl = System.getProperty("mcp.gateway.url",
+                            System.getenv("MCP_GATEWAY_URL"));
+                    String secret = System.getProperty("mcp.internal.secret",
+                            System.getenv("MCP_INTERNAL_SECRET"));
+                    if (baseUrl == null || baseUrl.isBlank() || secret == null || secret.isBlank()) {
+                        throw new IllegalStateException("Remote registration is not configured");
+                    }
+                    delegate = new HttpUserDataAccessObject(new HttpDbClient(baseUrl, secret));
                 }
                 return delegate;
             }
