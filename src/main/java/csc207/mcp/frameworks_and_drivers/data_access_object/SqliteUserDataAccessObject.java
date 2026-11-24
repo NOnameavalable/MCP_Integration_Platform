@@ -18,34 +18,6 @@ public class SqliteUserDataAccessObject
     }
 
     @Override
-    public boolean existsByUsername(String username) {
-        String sql = "SELECT 1 FROM users WHERE username = ?";
-        try (Connection conn = dbManager.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, username);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to check if username exists", e);
-        }
-    }
-
-    @Override
-    public boolean existsByEmail(String email) {
-        String sql = "SELECT 1 FROM users WHERE trim(email) = trim(?) COLLATE NOCASE";
-        try (Connection conn = dbManager.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to check if email exists", e);
-        }
-    }
-
-    @Override
     public void save(User user) {
         String sql = "INSERT INTO users (user_id, username, email, password_hash) VALUES (?, ?, ?, ?) ";
         try (Connection conn = dbManager.getConnection();

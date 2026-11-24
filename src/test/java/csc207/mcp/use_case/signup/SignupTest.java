@@ -68,7 +68,7 @@ public final class SignupTest {
             new SignupInteractor(dao, result, p -> { throw new AssertionError("Must not hash invalid input"); })
                     .execute(input);
             check(result.failures == 1 && result.successes == 0, "validation failure reported");
-            check(dao.lookups == 0 && dao.saves == 0, "invalid request does not touch DAO");
+            check(dao.saves == 0, "invalid request does not touch DAO");
         }
     }
 
@@ -77,17 +77,17 @@ public final class SignupTest {
         User existing = new User("old", "alice", "old@example.test", "old-hash");
         duplicate.users.put("alice", existing);
         Result result = new Result();
-        new SignupInteractor(duplicate, result, p -> { throw new AssertionError("Must not hash duplicate"); })
+        new SignupInteractor(duplicate, result, p -> "encoded-hash")
                 .execute(valid());
-        check(result.failures == 1 && duplicate.saves == 0, "duplicate rejected");
+        check(result.failures == 1 && duplicate.saves == 1, "duplicate rejected");
         check(duplicate.users.get("alice") == existing, "existing account unchanged");
 
-        for (int failure = 1; failure <= 4; failure++) {
+        for (int failure = 1; failure <= 2; failure++) {
             MemoryDao dao = new MemoryDao();
             dao.failure = failure;
             Result output = new Result();
             new SignupInteractor(dao, output, p -> "encoded-hash", () -> "u1").execute(valid());
-            check(output.failures == 1 && output.successes == 0, "lookup/save/race failure reported");
+            check(output.failures == 1 && output.successes == 0, "save failure or duplicate reported");
             check(dao.users.isEmpty(), "failed operation saves no user in test DAO");
             check(!output.error.contains("internal-sensitive-detail"), "internal exception not exposed");
         }
@@ -208,22 +208,13 @@ public final class SignupTest {
 
     private static final class MemoryDao implements SignupDataAccessInterface {
         final Map<String, User> users = new HashMap<>();
-        int lookups;
         int saves;
         int failure;
-        @Override public boolean existsByUsername(String username) {
-            lookups++;
-            if (failure == 1) { throw new IllegalStateException("internal-sensitive-detail"); }
-            return users.containsKey(username);
-        }
-        @Override public boolean existsByEmail(String email) {
-            if (failure == 4) { throw new IllegalStateException("internal-sensitive-detail"); }
-            return users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(email.strip()));
-        }
         @Override public void save(User user) {
             saves++;
-            if (failure == 2) { throw new IllegalStateException("internal-sensitive-detail"); }
-            if (failure == 3 || users.containsKey(user.getUsername())) {
+            if (failure == 1) { throw new IllegalStateException("internal-sensitive-detail"); }
+            if (failure == 2 || users.containsKey(user.getUsername())
+                    || users.values().stream().anyMatch(existing -> existing.getEmail().equalsIgnoreCase(user.getEmail()))) {
                 throw new IllegalArgumentException("internal-sensitive-detail");
             }
             users.put(user.getUsername(), user);

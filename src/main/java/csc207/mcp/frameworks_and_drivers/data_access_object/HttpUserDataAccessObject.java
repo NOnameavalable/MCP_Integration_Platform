@@ -16,20 +16,6 @@ public final class HttpUserDataAccessObject
     }
 
     @Override
-    public boolean existsByUsername(String username) {
-        JSONObject req = new JSONObject().put("username", username);
-        JSONObject res = client.post("/db/users/exists-by-username", req);
-        return res.getBoolean("exists");
-    }
-
-    @Override
-    public boolean existsByEmail(String email) {
-        JSONObject req = new JSONObject().put("email", email);
-        JSONObject res = client.post("/db/users/exists-by-email", req);
-        return res.getBoolean("exists");
-    }
-
-    @Override
     public void save(User user) {
         JSONObject req = new JSONObject()
                 .put("userId", user.getUserId())
