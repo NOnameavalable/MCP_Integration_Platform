@@ -4,6 +4,11 @@ import csc207.mcp.entity.ApiKey;
 import csc207.mcp.entity.McpServer;
 import csc207.mcp.entity.User;
 import csc207.mcp.frameworks_and_drivers.gateway.McpGatewayServer;
+import csc207.mcp.use_case.add_to_toolkit.AddToToolkitDataAccessInterface;
+import csc207.mcp.use_case.add_to_toolkit.AddToToolkitInputData;
+import csc207.mcp.use_case.add_to_toolkit.AddToToolkitInteractor;
+import csc207.mcp.use_case.add_to_toolkit.AddToToolkitOutputBoundary;
+import csc207.mcp.use_case.add_to_toolkit.AddToToolkitOutputData;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -146,6 +151,8 @@ public final class HttpDaoIntegrationTest {
             mcpkitDao.removeFromUserMcpkit("u1", "m1");
             check(mcpkitDao.getMcpkitByUserId("u1").isEmpty(), "removeFromUserMcpkit removes entry");
 
+            addToToolkitOverHttp(db, client);
+
             System.out.println("HTTP DAO integration: " + checks + " checks passed");
         } finally {
             if (server != null) {
@@ -156,6 +163,71 @@ public final class HttpDaoIntegrationTest {
                     Files.deleteIfExists(file);
                 }
             }
+        }
+    }
+
+    private static void addToToolkitOverHttp(SqliteDatabaseManager db, HttpDbClient client) throws Exception {
+        try (var conn = db.getConnection(); var stmt = conn.createStatement()) {
+            stmt.execute("INSERT INTO mcp_servers VALUES ('m2', 'search', 'Search MCP'), "
+                    + "('m3', 'other', 'Other MCP')");
+        }
+        AddToToolkitDataAccessInterface dao = new HttpMcpkitDataAccessObject(client);
+        check(dao.getUserById("missing") == null, "HTTP toolkit lookup returns null for missing user");
+        User user = dao.getUserById("u1");
+        check(user.getUsername().equals("alice") && user.getEmail().equals("Alice@Example.com")
+                && user.getPasswordHash().equals("pw-hash-1"), "HTTP toolkit lookup restores account fields");
+        check(user.getMcpkit().userIdGetter().equals("u1") && user.getMcpkit().mcpkitGetter().isEmpty(),
+                "HTTP toolkit lookup restores an empty owned toolkit");
+        user.getMcpkit().addTool(dao.getMcpById("m1"));
+        dao.saveUser(user);
+        dao.saveUser(user);
+        User restored = dao.getUserById("u1");
+        check(restored.getMcpkit().mcpkitGetter().size() == 1, "HTTP save avoids duplicate memberships");
+        McpServer weather = restored.getMcpkit().mcpkitGetter().get(0);
+        check(weather.getMcpId().equals("m1") && weather.getTools().size() == 1
+                && weather.getTools().get(0).getParameters().equals(List.of("city", "days")),
+                "HTTP user lookup includes MCP tools and parameters");
+
+        int[] successes = {0};
+        int[] failures = {0};
+        AddToToolkitOutputBoundary presenter = new AddToToolkitOutputBoundary() {
+            public void prepareSuccessView(AddToToolkitOutputData data) {
+                successes[0]++;
+                check(dao.getUserById(data.getUserId()).getMcpkit().contains(dao.getMcpById(data.getServerId())),
+                        "Interactor presents success after HTTP save commits");
+            }
+
+            public void prepareFailView(String message) {
+                failures[0]++;
+            }
+        };
+        AddToToolkitInteractor interactor = new AddToToolkitInteractor(dao, presenter);
+        interactor.excute(new AddToToolkitInputData("u1", "m2"));
+        interactor.excute(new AddToToolkitInputData("u1", "m2"));
+        check(successes[0] == 1 && failures[0] == 1, "Interactor adds through HTTP and rejects duplicates");
+        dao.saveUser(user);
+        check(dao.getUserById("u1").getMcpkit().mcpkitGetter().size() == 2,
+                "HTTP save of stale toolkit preserves other entries");
+
+        dao.saveUser(new User("u1", "ignored", "ignored@example.com", "ignored-hash"));
+        check(dao.getUserById("u1").getUsername().equals("alice")
+                && dao.getUserById("u1").getPasswordHash().equals("pw-hash-1"),
+                "HTTP toolkit save preserves account fields");
+        User invalid = dao.getUserById("u1");
+        invalid.getMcpkit().addTool(dao.getMcpById("m3"));
+        invalid.getMcpkit().addTool(new McpServer("Missing", "", "missing"));
+        try {
+            dao.saveUser(invalid);
+            throw new AssertionError("Unknown MCP must be rejected over HTTP");
+        } catch (IllegalArgumentException expected) {
+            check(dao.getUserById("u1").getMcpkit().mcpkitGetter().size() == 2,
+                    "HTTP save failure leaves persisted toolkit intact");
+        }
+        try {
+            dao.saveUser(new User("missing", "missing", "missing@example.com", "hash"));
+            throw new AssertionError("Unknown user must be rejected over HTTP");
+        } catch (IllegalArgumentException expected) {
+            check(dao.getUserById("missing") == null, "HTTP save does not register a missing user");
         }
     }
 

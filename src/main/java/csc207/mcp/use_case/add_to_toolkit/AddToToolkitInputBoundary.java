@@ -1,7 +1,5 @@
 package csc207.mcp.use_case.add_to_toolkit;
 
-import csc207.mcp.use_case.search_market.SearchMarketInputData;
-
 /**
  * Defines the entry point for the add-to-toolkit use case.
  * Controllers depend on this interface, which is implemented by the interactor.

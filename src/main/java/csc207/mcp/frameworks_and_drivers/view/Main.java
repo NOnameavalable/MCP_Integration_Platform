@@ -27,8 +27,8 @@ public class Main extends Application {
 
         BorderPane root = new BorderPane();
         Header header = new PlatformHeader();
-        ContentView login = new LoginContent();
         ContentView signup = new SignupContent();
+        ContentView login = new LoginContent(() -> root.setCenter(signup));
         ContentView account = new AccountContent();
         ContentView toolkit = new ToolkitContent();
         ContentView gateway = new McpGatewayContent();
