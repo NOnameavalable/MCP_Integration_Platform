@@ -17,15 +17,11 @@ public final class UniqueEmailTest {
             database.initializeTables();
             SqliteUserDataAccessObject dao = new SqliteUserDataAccessObject(database);
             dao.save(new User("one", "alice", "Alice@example.com", "hash"));
-            check(dao.existsByEmail(" alice@EXAMPLE.com "), "Email lookup normalizes case and spaces");
-            check(!dao.existsByEmail("other@example.com"), "Unused email is available");
             check(dao.findByIdentifier("ALICE@example.com").getUserId().equals("one"), "Email login agrees with uniqueness");
             Result result = new Result();
-            new SignupInteractor(dao, result, password -> {
-                throw new AssertionError("Duplicate email must be rejected before hashing");
-            }).execute(new SignupInputData("bob", "alice@example.com", "secret", "secret"));
-            check(result.error.equals("This email is already registered."), "Use case reports duplicate email");
-            check(!dao.existsByUsername("bob"), "Rejected signup creates no account");
+            new SignupInteractor(dao, result, password -> "encoded-hash").execute(new SignupInputData("bob", "alice@example.com", "secret", "secret"));
+            check(result.error.equals("This username or email is already registered."), "Use case reports duplicate email");
+            check(dao.findByIdentifier("bob") == null, "Rejected signup creates no account");
             try {
                 dao.save(new User("two", "bob", " alice@EXAMPLE.com ", "other-hash"));
                 throw new AssertionError("Database must reject duplicate email even without precheck");
@@ -52,7 +48,7 @@ public final class UniqueEmailTest {
             }
             legacy.initializeTables();
             SqliteUserDataAccessObject upgraded = new SqliteUserDataAccessObject(legacy);
-            check(upgraded.existsByEmail("SAME@example.com"), "Existing accounts survive successful upgrade");
+            check(upgraded.findByIdentifier("SAME@example.com") != null, "Existing accounts survive successful upgrade");
             try {
                 upgraded.save(new User("3", "c", "same@example.com", "hash"));
                 throw new AssertionError("Existing databases must gain email uniqueness");

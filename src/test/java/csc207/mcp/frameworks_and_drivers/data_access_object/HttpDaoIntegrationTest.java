@@ -41,7 +41,7 @@ public final class HttpDaoIntegrationTest {
             HttpDbClient badClient = new HttpDbClient(baseUrl, "wrong-secret");
             HttpUserDataAccessObject badUserDao = new HttpUserDataAccessObject(badClient);
             try {
-                badUserDao.existsByUsername("alice");
+                badUserDao.save(new User("unauthorized", "denied", "denied@example.com", "hash"));
                 throw new AssertionError("Wrong secret must be rejected");
             } catch (IllegalStateException expected) {
                 check(true, "Rejects wrong X-Internal-Secret");
@@ -50,13 +50,9 @@ public final class HttpDaoIntegrationTest {
             // 2. User DAO over HTTP
             HttpDbClient client = new HttpDbClient(baseUrl, secret);
             HttpUserDataAccessObject userDao = new HttpUserDataAccessObject(client);
-            check(!userDao.existsByUsername("alice"), "Unknown username does not exist");
-            check(!userDao.existsByEmail("alice@example.com"), "Unknown email does not exist");
             check(userDao.findByIdentifier("alice") == null, "Unknown identifier returns null");
 
             userDao.save(new User("u1", "alice", "Alice@Example.com", "pw-hash-1"));
-            check(userDao.existsByUsername("alice"), "Saved username exists");
-            check(userDao.existsByEmail(" alice@example.com "), "Saved email exists (case/space normalized)");
 
             User foundByName = userDao.findByIdentifier("alice");
             check(foundByName != null && "u1".equals(foundByName.getUserId()), "Find by username works");

@@ -21,14 +21,6 @@ public final class UserDbHttpHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         DbHttpSupport.dispatch(exchange, internalSecret, (path, req) -> {
             switch (path) {
-                case "/db/users/exists-by-username" -> {
-                    boolean exists = userDao.existsByUsername(req.getString("username"));
-                    DbHttpSupport.sendJson(exchange, 200, new JSONObject().put("exists", exists));
-                }
-                case "/db/users/exists-by-email" -> {
-                    boolean exists = userDao.existsByEmail(req.getString("email"));
-                    DbHttpSupport.sendJson(exchange, 200, new JSONObject().put("exists", exists));
-                }
                 case "/db/users/save" -> {
                     User user = new User(
                             req.getString("userId"),

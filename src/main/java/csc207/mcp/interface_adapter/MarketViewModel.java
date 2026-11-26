@@ -1,50 +1,68 @@
 package csc207.mcp.interface_adapter;
 
+import csc207.mcp.entity.Mcp;
+import java.util.List;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
-/** Observable marketplace state for the result of an add-to-toolkit request. */
+/** JavaFX-observable marketplace state shared by LoadMcps, SearchMarket, and AddToToolkit. */
 public final class MarketViewModel {
-    private final ReadOnlyObjectWrapper<Result> state = new ReadOnlyObjectWrapper<>(
-            this, "state", new Result(false, "", "", "", ""));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(
+            this, "state", new State(false, List.of(), ""));
 
-    public ReadOnlyObjectProperty<Result> stateProperty() {
+    /** The view can observe/bind this property but cannot replace its state. */
+    public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
     }
 
-    public Result getState() { return state.get(); }
-
-    /** Called by the presenter on the JavaFX application thread. */
-    public void showSuccess(String userId, String serverId, String serverName) {
-        state.set(new Result(true, userId, serverId, serverName, "Added to toolkit successfully."));
+    public State getState() {
+        return state.get();
     }
 
-    /** Clears metadata from any earlier successful attempt. */
+    public boolean isLoaded() {
+        return getState().isLoaded();
+    }
+
+    public List<Mcp> getMcps() {
+        return getState().getMcps();
+    }
+
+    public String getErrorMessage() {
+        return getState().getErrorMessage();
+    }
+
+    /** Updates the catalog after a successful load; call on the JavaFX application thread. */
+    public void showSuccess(List<Mcp> mcps) {
+        state.set(new State(true, mcps, ""));
+    }
+
+    /** Records a load failure; call on the JavaFX application thread. */
     public void showFailure(String errorMessage) {
-        state.set(new Result(false, "", "", "", errorMessage));
+        state.set(new State(false, List.of(), errorMessage));
     }
 
-    /** Immutable snapshot of one completed request. */
-    public static final class Result {
-        private final boolean successful;
-        private final String userId;
-        private final String serverId;
-        private final String serverName;
-        private final String message;
+    /** An immutable snapshot; each completed load emits one complete update. */
+    public static final class State {
+        private final boolean loaded;
+        private final List<Mcp> mcps;
+        private final String errorMessage;
 
-        private Result(boolean successful, String userId, String serverId,
-                       String serverName, String message) {
-            this.successful = successful;
-            this.userId = userId;
-            this.serverId = serverId;
-            this.serverName = serverName;
-            this.message = message;
+        private State(boolean loaded, List<Mcp> mcps, String errorMessage) {
+            this.loaded = loaded;
+            this.mcps = List.copyOf(mcps);
+            this.errorMessage = errorMessage;
         }
 
-        public boolean isSuccessful() { return successful; }
-        public String getUserId() { return userId; }
-        public String getServerId() { return serverId; }
-        public String getServerName() { return serverName; }
-        public String getMessage() { return message; }
+        public boolean isLoaded() {
+            return loaded;
+        }
+
+        public List<Mcp> getMcps() {
+            return mcps;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
     }
 }
