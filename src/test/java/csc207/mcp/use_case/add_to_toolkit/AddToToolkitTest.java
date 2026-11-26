@@ -2,13 +2,15 @@ package csc207.mcp.use_case.add_to_toolkit;
 
 import csc207.mcp.entity.McpServer;
 import csc207.mcp.entity.User;
-import csc207.mcp.interface_adapter.MarketViewModel;
 import csc207.mcp.interface_adapter.Session;
 import csc207.mcp.interface_adapter.add_to_toolkit.AddToToolkitController;
 import csc207.mcp.interface_adapter.add_to_toolkit.AddToToolkitPresenter;
+import csc207.mcp.interface_adapter.mcpkit.McpkitState;
+import csc207.mcp.interface_adapter.mcpkit.McpkitViewModel;
 import csc207.mcp.use_case.login.LoginOutputData;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Standalone business-flow checks; no database or JavaFX application startup needed. */
 public final class AddToToolkitTest {
@@ -34,6 +36,8 @@ public final class AddToToolkitTest {
         check(original.getMcpkit().mcpkitGetter().size() == 1, "loaded user remains unchanged");
         check(result.output.getUserId().equals("u1") && result.output.getServerId().equals("m1")
                 && result.output.getServerName().equals("Selected"), "output identifies saved addition");
+        check(result.output.getMcpkitList().equals(List.of(existing, dao.server)),
+                "output carries both existing entries and the saved addition");
 
         // A database lookup may return a different object for the same MCP ID.
         dao.server = new McpServer("Selected", "", "m1");
@@ -75,9 +79,14 @@ public final class AddToToolkitTest {
 
     private static void controllerAndPresentation() {
         Dao dao = new Dao();
+        McpServer existing = new McpServer("Existing", "", "existing");
+        dao.user.getMcpkit().addTool(existing);
         Session session = new Session();
         session.login(new LoginOutputData("u1", "user", "user@example.com"));
-        MarketViewModel model = new MarketViewModel();
+        McpkitViewModel model = new McpkitViewModel();
+        model.setState(new McpkitState("", false, List.of(existing)));
+        AtomicInteger notifications = new AtomicInteger();
+        model.stateProperty().addListener((observable, previous, current) -> notifications.incrementAndGet());
         List<Runnable> queue = new ArrayList<>();
         Object frontendSelection = new Object();
         AddToToolkitPresenter presenter = new AddToToolkitPresenter(model, queue::add);
@@ -85,28 +94,41 @@ public final class AddToToolkitTest {
         AddToToolkitController controller = new AddToToolkitController(interactor, session,
                 input -> input == frontendSelection ? "m1" : null);
         controller.execute(frontendSelection);
-        check(dao.saves == 1 && queue.size() == 1 && !model.getState().isSuccessful(),
+        check(dao.saves == 1 && queue.size() == 1 && !model.getState().getStatus()
+                && notifications.get() == 0 && model.getState().getMcpkitList().equals(List.of(existing)),
                 "Object mapping, session, persistence, and UI dispatch are connected");
         queue.remove(0).run();
-        MarketViewModel.Result success = model.getState();
-        check(success.isSuccessful() && success.getServerId().equals("m1")
-                && success.getUserId().equals("u1"), "presenter publishes successful addition");
+        McpkitState success = model.getState();
+        check(success.getStatus() && success.getMcpkitList().equals(List.of(existing, dao.server))
+                && !success.getMessage().isBlank(), "presenter publishes complete updated toolkit");
+        check(notifications.get() == 1, "successful addition notifies toolkit observers once");
 
         controller.execute(frontendSelection);
         queue.remove(0).run();
-        check(!model.getState().isSuccessful() && model.getState().getServerId().isEmpty()
-                && !model.getState().getMessage().isBlank(), "failure clears stale success data");
-        check(success.isSuccessful(), "previous result is immutable");
+        check(!model.getState().getStatus() && model.getState().getMcpkitList().equals(success.getMcpkitList())
+                && !model.getState().getMessage().isBlank(), "failure preserves current toolkit and updates message");
+        check(notifications.get() == 2, "failed addition notifies toolkit observers once");
+        check(success.getStatus(), "previous result remains unchanged");
         controller.execute(null);
         queue.remove(0).run();
-        check(!model.getState().isSuccessful() && dao.saves == 1, "empty Object input rejected");
+        check(!model.getState().getStatus() && dao.saves == 1, "empty Object input rejected");
 
         session.logout();
         int previousLookups = dao.lookups;
         controller.execute(frontendSelection);
         queue.remove(0).run();
-        check(!model.getState().isSuccessful() && dao.lookups == previousLookups,
+        check(!model.getState().getStatus() && dao.lookups == previousLookups,
                 "controller uses current session on each call");
+        check(model.getState().getMcpkitList().equals(success.getMcpkitList()),
+                "invalid requests preserve the displayed toolkit");
+
+        // A failure dispatched later should preserve the state present when it is displayed.
+        presenter.prepareFailView("Unable to add.");
+        McpServer refreshed = new McpServer("Refreshed", "", "refreshed");
+        model.setState(new McpkitState("Loaded", true, List.of(refreshed)));
+        queue.remove(0).run();
+        check(!model.getState().getStatus() && model.getState().getMcpkitList().equals(List.of(refreshed)),
+                "queued failure preserves a newer toolkit refresh");
     }
 
     private static final class Dao implements AddToToolkitDataAccessInterface {

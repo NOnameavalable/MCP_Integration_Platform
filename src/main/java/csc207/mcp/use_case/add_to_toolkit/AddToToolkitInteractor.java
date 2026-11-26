@@ -64,6 +64,6 @@ public final class AddToToolkitInteractor implements AddToToolkitInputBoundary {
         }
 
         presenter.prepareSuccessView(new AddToToolkitOutputData(
-                user.getUserId(), server.getMcpId(), server.getMcpName()));
+                user.getUserId(), server.getMcpId(), server.getMcpName(), updatedKit.mcpkitGetter()));
     }
 }
