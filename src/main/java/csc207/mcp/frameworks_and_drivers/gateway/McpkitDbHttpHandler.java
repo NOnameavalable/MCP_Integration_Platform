@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import csc207.mcp.entity.McpServer;
 import csc207.mcp.entity.Tool;
+import csc207.mcp.entity.User;
 import csc207.mcp.frameworks_and_drivers.data_access_object.SqliteMcpkitDataAccessObject;
 import java.io.IOException;
 import java.util.List;
@@ -38,6 +39,27 @@ public final class McpkitDbHttpHandler implements HttpHandler {
                     }
                     DbHttpSupport.sendJson(exchange, 200, res);
                 }
+                case "/db/mcpkit/get-user-by-id" -> {
+                    User user = mcpkitDao.getUserById(req.getString("userId"));
+                    JSONObject res = new JSONObject().put("user", user == null ? JSONObject.NULL : toJson(user));
+                    DbHttpSupport.sendJson(exchange, 200, res);
+                }
+                case "/db/mcpkit/save-user" -> {
+                    User user = mcpkitDao.getUserById(req.getString("userId"));
+                    if (user == null) {
+                        throw new IllegalArgumentException("User not found");
+                    }
+                    JSONArray serverIds = req.getJSONArray("serverIds");
+                    for (int i = 0; i < serverIds.length(); i++) {
+                        McpServer server = mcpkitDao.getMcpById(serverIds.getString(i));
+                        if (server == null) {
+                            throw new IllegalArgumentException("MCP server not found");
+                        }
+                        user.getMcpkit().addTool(server);
+                    }
+                    mcpkitDao.saveUser(user);
+                    DbHttpSupport.sendJson(exchange, 200, new JSONObject().put("ok", true));
+                }
                 case "/db/mcpkit/get-by-user-id" -> {
                     List<McpServer> servers = mcpkitDao.getMcpkitByUserId(req.getString("userId"));
                     JSONArray array = new JSONArray();
@@ -53,6 +75,19 @@ public final class McpkitDbHttpHandler implements HttpHandler {
                 default -> DbHttpSupport.sendError(exchange, 404, "Unknown endpoint: " + path);
             }
         });
+    }
+
+    private static JSONObject toJson(User user) {
+        JSONArray servers = new JSONArray();
+        for (McpServer server : user.getMcpkit().mcpkitGetter()) {
+            servers.put(toJson(server));
+        }
+        return new JSONObject()
+                .put("userId", user.getUserId())
+                .put("username", user.getUsername())
+                .put("email", user.getEmail())
+                .put("passwordHash", user.getPasswordHash())
+                .put("servers", servers);
     }
 
     private static JSONObject toJson(McpServer server) {

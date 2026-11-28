@@ -1,7 +1,10 @@
 package csc207.mcp.frameworks_and_drivers.data_access_object;
 
 import csc207.mcp.entity.McpServer;
+import csc207.mcp.entity.Mcpkit;
 import csc207.mcp.entity.Tool;
+import csc207.mcp.entity.User;
+import csc207.mcp.use_case.add_to_toolkit.AddToToolkitDataAccessInterface;
 import csc207.mcp.use_case.list_mcpkit.ListMcpkitDataAccessInterface;
 import csc207.mcp.use_case.remove_from_mcpkit.RemoveFromMcpkitDataAccessInterface;
 
@@ -11,11 +14,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.json.JSONArray;
 
 /** SQLite DAO for user mcpkits and MCP server catalog lookups. */
 public class SqliteMcpkitDataAccessObject
-        implements ListMcpkitDataAccessInterface, RemoveFromMcpkitDataAccessInterface {
+        implements ListMcpkitDataAccessInterface, RemoveFromMcpkitDataAccessInterface,
+        AddToToolkitDataAccessInterface {
     private final SqliteDatabaseManager dbManager;
 
     public SqliteMcpkitDataAccessObject(SqliteDatabaseManager dbManager) {
@@ -60,6 +65,71 @@ public class SqliteMcpkitDataAccessObject
         }
     }
 
+    @Override
+    public User getUserById(String userId) {
+        String sql = "SELECT user_id, username, email, password_hash FROM users WHERE user_id = ?";
+        try (Connection conn = dbManager.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                Mcpkit kit = new Mcpkit(rs.getString("user_id"));
+                for (McpServer server : getMcpkitByUserId(conn, userId)) {
+                    kit.addTool(server);
+                }
+                return new User(rs.getString("user_id"), rs.getString("username"),
+                        rs.getString("email"), rs.getString("password_hash"), kit);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to get user and toolkit by ID", e);
+        }
+    }
+
+    /** Adds toolkit memberships without overwriting account fields or deleting existing entries. */
+    @Override
+    public void saveUser(User user) {
+        Objects.requireNonNull(user, "user must not be null");
+        if (!user.getUserId().equals(user.getMcpkit().userIdGetter())) {
+            throw new IllegalArgumentException("Toolkit must belong to the user being saved");
+        }
+
+        String insertSql = "INSERT INTO user_mcpkit (user_id, mcp_id) VALUES (?, ?) "
+                + "ON CONFLICT(user_id, mcp_id) DO NOTHING";
+        try (Connection conn = dbManager.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM users WHERE user_id = ?")) {
+                    ps.setString(1, user.getUserId());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("User not found");
+                        }
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    for (McpServer server : user.getMcpkit().mcpkitGetter()) {
+                        ps.setString(1, user.getUserId());
+                        ps.setString(2, server.getMcpId());
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                conn.commit();
+            } catch (SQLException | RuntimeException failure) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackFailure) {
+                    failure.addSuppressed(rollbackFailure);
+                }
+                throw failure;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to save user's toolkit", e);
+        }
+    }
+
     private void loadToolsForServer(Connection conn, McpServer server) throws SQLException {
         String sql = "SELECT name, description, parameters_json FROM tools WHERE mcp_id = ?";
 
@@ -83,12 +153,19 @@ public class SqliteMcpkitDataAccessObject
 
     @Override
     public List<McpServer> getMcpkitByUserId(String userId) {
+        try (Connection conn = dbManager.getConnection()) {
+            return getMcpkitByUserId(conn, userId);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to get MCPkits by user ID", e);
+        }
+    }
+
+    private List<McpServer> getMcpkitByUserId(Connection conn, String userId) throws SQLException {
         String sql = "SELECT m.mcp_id, m.name, m.description "
                 + "FROM user_mcpkit um "
                 + "JOIN mcp_servers m ON um.mcp_id = m.mcp_id "
                 + "WHERE um.user_id = ?";
-        try (Connection conn = dbManager.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<McpServer> servers = new ArrayList<>();
@@ -102,8 +179,6 @@ public class SqliteMcpkitDataAccessObject
                 }
                 return servers;
             }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to get MCPkits by user ID", e);
         }
     }
 
